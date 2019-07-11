@@ -5,13 +5,25 @@ Linux üzerinde daha hızlı olabilmek için önce Eclipse ve STS(Spring Tools S
 Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux command larına ihtiyacım oldu.
 
 1. $PATH ve $JAVA_HOME'u ayarlamak
+    - Benzer şekilde $LD_LIBRARY_PATH
 2. Bunun için java(JRE'de) ve javac(JDK'da) executable'larının yerlerini bulmak
     - Bunun için [Where can I find the Java SDK in Linux?](https://stackoverflow.com/questions/5251323/where-can-i-find-the-java-sdk-in-linux)
-    - sdfsdfsdf
+        > how to locate/find executable/sdk
+        >> you can type `readlink -f $(which java)` to find the location of the java command
+        >> On Ubuntu, it looks like it is in `/usr/lib/jvm/java-6-openjdk/` for OpenJDK,
+        and in some other subdirectory of `/usr/lib/jvm/` for Suns JDK (and other implementations as well, I think).
+
+        sorun şu ki her ne kadar *symbolic link* üzerinden jre'de executable'ı(jdk'daki için javac yazabilirdim) bulsam da SDK bu değil.
+        Nitekim, IDEA'da `The selected directory is not a valid home for JDK` hatası alıyorum.
+
+        `whereis`, `find`, `locate`, `which` linux command'larının pratik kullanımlarına bakılacak.
+        *TODO:* bunları Gist olarak ekle. 
 3. Git kurulumu ve remote/local workflow'u
     - /usr/bin/git de bulunuyor, IDE otomatik olarak buradan görüyor.
     - Remote'dan clone edip local'ime indirdiğim bir proje için ilgili folder'da .git folder'ı oluştu.
+
     ### içeriği
+
     ```
     [core]
             repositoryformatversion = 0
@@ -25,3 +37,5 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
             remote = origin
             merge = refs/heads/master
     ```
+
+### References/Further reading/readings/materials
