@@ -6,7 +6,7 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
 
 1. $PATH ve $JAVA_HOME'u ayarlamak
 2. Bunun için java(JRE'de) ve javac(JDK'da) executable'larının yerlerini bulmak
-    - Bunun için 1
+    - Bunun için [Where can I find the Java SDK in Linux?](https://stackoverflow.com/questions/5251323/where-can-i-find-the-java-sdk-in-linux)
     - sdfsdfsdf
 3. Git kurulumu ve remote/local workflow'u
     - /usr/bin/git de bulunuyor, IDE otomatik olarak buradan görüyor.
