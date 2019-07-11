@@ -33,13 +33,17 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
 
     Add the following lines:
 
+    ```
     ## JAVA_HOME
+
     export JAVA_HOME="/usr/lib/jvm/java-9-openjdk-amd64"
+
     export PATH=$PATH:$JAVA_HOME/bin
+    ```
 
     Add it to the /etc/environemnt file with:
 
-    echo "JAVA_HOME=\"/usr/lib/jvm/java-9-openjdk-amd64\"" | sudo tee -a /etc/environment
+    `echo "JAVA_HOME=\"/usr/lib/jvm/java-9-openjdk-amd64\"" | sudo tee -a /etc/environment`
 
     Close and open a new terminal. If all doesn't work then:
     Launch Intellij Press: ctrl+alt+shift+S The go to Platform Settings ->
@@ -49,7 +53,9 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
     Bu blockquote'in dışında...
 
 
-    asdsad
+    **TODO:** Böyle uzun kopyala yapıştır code içerikli yazılar nasıl en kolayca blockquote içine alınabiliyor?
+    `> <div> paragraphs...</div>` şeklinde oluyor gibiydi ama tekrar bozuldu; markdown içinde ne kadar html kullanabilsek de
+    `\n` ler ile ilgili durumlar bunlar.
 
 3. Git kurulumu ve remote/local workflow'u
     - /usr/bin/git de bulunuyor, IDE otomatik olarak buradan görüyor.
