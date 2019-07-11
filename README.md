@@ -28,34 +28,7 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
 
     - **TODO:** sonuç olarak hala SDK'yı ekleyemedim.
 
-    >  You will need to add JAVA_HOME to your .bashrc file.
-
-    Edit the:
-
-    gedit ~/.bashrc
-
-    Add the following lines:
-
-    ## JAVA_HOME
-    export JAVA_HOME="/usr/lib/jvm/java-9-openjdk-amd64"
-    export PATH=$PATH:$JAVA_HOME/bin
-
-    Add it to the /etc/environemnt file with:
-
-    echo "JAVA_HOME=\"/usr/lib/jvm/java-9-openjdk-amd64\"" | sudo tee -a /etc/environment
-
-    Close and open a new terminal.
-
-    If all doesn't work then:
-
-        Launch Intellij
-
-        Press: ctrl+alt+shift+S
-            The go to Platform Settings -> SDKs
-            click to add the path for your java sdk
-
-        enter image description here
-        Now your IntelliJ should be able to see it.
+    >  You will need to add JAVA_HOME to your .bashrc file. Edit the: gedit ~/.bashrc Add the following lines: ## JAVA_HOME export JAVA_HOME="/usr/lib/jvm/java-9-openjdk-amd64" export PATH=$PATH:$JAVA_HOME/bin Add it to the /etc/environemnt file with: echo "JAVA_HOME=\"/usr/lib/jvm/java-9-openjdk-amd64\"" | sudo tee -a /etc/environment Close and open a new terminal. If all doesn't work then: Launch Intellij Press: ctrl+alt+shift+S The go to Platform Settings -> SDKs click to add the path for your java sdk enter image description here Now your IntelliJ should be able to see it.
 
 
     asdsad
