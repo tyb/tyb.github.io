@@ -134,10 +134,247 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
 IDEA'da bir projede sadece tyb.github.io'yu editliyorum.
 Diğer IDEA projesinde gerçek projeyi yapacağım. 
 
+## PBIs(epic ya da feature şeklinde daha çok)
+
 1. Boilerplate spring backend code 
     1. API consume 
-        - Official Tumblr api'sini kullanabilmek için önce hesabımdan bir API Key alıyorum. Public/Private ya da Secret Token için.
+        - Official Tumblr api'sini kullanabilmek için önce hesabımdan bir API Key alıyorum. 
+        Public/Private ya da Secret Token için.
+        - Doğrudan kendim API'yi çağırabilirdim ama `Jumblr` java client api consumer wrapper library'sini kullanacağım.
+    2. API'den alınanlar 20'şerlik listeler olarak dönüyor. Dönen JSON datası doğrudan client'a gönderilecek. 
+        - Doğrudan veritabanına kaydetmiyorum, çünkü gelen sonuçları takip etmek istiyorum. 
+            - Çok fazla veri alacağımdan olası hata durumlarında kaldığım yeri takip edebilmek ve uzun süreceğinden
+            - önyüzde bir progress bar ve her gelen sonucu geçiçi olarak ekranda gösterme durumu olacak. 
+        - Bunun için `websocket` ya da `stomp` kullanabilirim ya da `firebase`. Bu pub/sub yapısı. 
+        Teknik olarak bu konuyu enlemesine ve derinlemesine işleyen bir yazı yazacağım. Ama şimdilik şunu ayırt etmekte fayda var:
+        MVP yani `minimum viable product` için seçimimi `websocket`. 
+        > pub/sub; queue, topic, stream olarak ayrıştırılabilir. 
+        > Burada teknik olarak topic mantığı olacak. Yani unordered messages and multiple consumer for one message.
+        > Bunun yerine 20'lik olarak almak için Comet, AJAX çağrıları ya da Long Polling vs. yapabilirdim. 
+    3. **Daha sonra: 1. ve 2. adımlar yapıldıktan sonra 1.3 yapılacak**
+        DBMS(MySQL ya da Postgres) ya da Cassandra ya da MongoDB 
+        - kurulumu, 
+        - konfigürasyonu: directory'ler ve roller, şifreler, vs. 
+        - path'ler hakkında genel bilgiler. data directory neresi, diğer directory'ler.
+        JDBC Driver 
+        - Konfigürasyon
+        - Hibernate konfigürasyon
+        - JPA Konfigürasyon
+        - Migrations 
+        - Seeds
+        - Lombok
 2. Boilerplate frontend code 
+    - Minimum react components
+    - Progress bar component
+    - Widget, card, material UI Panel components
+    - Bootstrap templates 
+    - CSS Layout: positioning
+    - Backend'e erişim: Redux'a ihtiyaç duyulan noktalar
+    - Node.js kurulum ve component'lerin compile edilmesi
+    - Packaging: Webpack, gulp, grunt ??
+    - Dependency check/bundler: yarn, babel vs. 
+    - Third party library kullanımı 
+    - Ekranda Resume, ertele vs. gibi tuşlar da olmalı. 
+        Buradan server'a http isteği ya da websocket üzerinden istek gönderilebilmeli. 
+
+## STS(Spring tool suite) gibi IDEA üzerinden en kısa yoldan spring projesi oluşturmak.
+
+Community edition'da builtin olarak spring initializer yok. 
+O yüzden New > Project deyip workspace'imiz altında bir maven projesi oluşturuyoruz:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.tyb</groupId>
+    <artifactId>tumblrConsumer</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+</project>
+```
+
+**maven** builtin olarak idea ile birlikte geliyor. 
+
+**classpath** imiz:
+```jshelllanguage
+taha@taha-Inspiron-3558:~$ echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:
+/usr/lib/jvm/java-11-openjdk-amd64/bin
+taha@taha-Inspiron-3558:~$ echo $JAVA_HOME
+/usr/lib/jvm/java-11-openjdk-amd64
+```
+IDEA classpath olarak JDK'yı görüyor. Ayrıca third party library'lerim de `/home/taha/.m2/repository` altında. 
+
+### spring boot starter parent ve jar'lar ayarlanarak spring boot initializer vs. kullanmadan kendimiz oluşturalım:
+
+[https://start.spring.io/](https://start.spring.io/)'dan gidip aşağıdakileri seçip
+
+1. web starter
+    - rest, mvc, tomcat 
+2. security
+    - TODO
+3. data jpa
+4. websocket 
+    - SockJS
+    - STOMP
+
+İndirmeden, explore project dersek;
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.1.6.RELEASE</version>
+    <relativePath/> <!-- lookup parent from repository -->
+  </parent>
+  <groupId>com.example</groupId>
+  <artifactId>demo</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>demo</name>
+  <description>Demo project for Spring Boot</description>
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
+```
+
+maven bu dependency'leri indiremiyor çünkü 
+1. `/home/taha/.m2/settings.xml` de reposityory ve proxy ayarları olmayabilir.
+
+Ubuntu Gnome'da .m2 gibi hidden resource'ları göstermek için `CTRL + H` yapılır. 
+
+`.m2 repository` altına bakınca görüleceği üzere, import changes ya da reimport changes yaptığımız halde artifact'ler alınamamış. 
+
+Görüleceği üzere `settings.xml` ve `profiles.xml` dosyaları yok.
+IDE'den proje sağ tık - maven - create settings.xml ve diğeri denilerek oluşturulabilir. 
+
+####repository adresleri ve proxy ayarları
+
+settings.xml global, pom.xml ise local'dir bu açıdan.
+`maven settings.xml for spring boot` olarak arattım.
+
+MVP olarak içerik:
+```xml
+<profiles>
+        <profile>
+            <id>securecentral</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <!--Override the repository (and pluginRepository) "central" from the
+               Maven Super POM -->
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+</profiles>
+<pluginGroups></pluginGroups>
+<proxies></proxies>
+<servers></servers>
+<mirrors></mirrors>
+
+```
+
+ayrıca istenirse şu şekilde daha custom repo eklenebilir:
+```xml
+    <repositories>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+```
 
 
-### References/Further reading/readings/materials
+
+# References/Further reading/readings/materials
