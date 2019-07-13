@@ -4,9 +4,9 @@
 Linux üzerinde daha hızlı olabilmek için önce Eclipse ve STS(Spring Tools Suite) üzerinden ilerlemek istedim.
 Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux command larına ihtiyacım oldu.
 
-1. $PATH ve $JAVA_HOME'u ayarlamak
+1. $PATH ve $JAVA_HOME'u ayarlamak 
     - Benzer şekilde $LD_LIBRARY_PATH
-2. Bunun için java(JRE'de) ve javac(JDK'da) executable'larının yerlerini bulmak
+2. Bunun için java(JRE'de) ve javac(JDK'da) executable'larının yerlerini bulmak ve kurmak
     - Bunun için [Where can I find the Java SDK in Linux?](https://stackoverflow.com/questions/5251323/where-can-i-find-the-java-sdk-in-linux)
         > how to locate/find executable/sdk
         >> you can type `readlink -f $(which java)` to find the location of the java command
@@ -29,11 +29,11 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
     - **TODO:** sonuç olarak hala SDK'yı ekleyemedim.
 
     > <div> You will need to add JAVA_HOME to your .bashrc file.
-    Edit the: g
+    > Edit the: 
 
-    edit ~/.bashrc
+    > `gedit ~/.bashrc`
 
-    Add the following lines:
+    > Add the following lines:
 
     ```
     ## JAVA_HOME
@@ -76,21 +76,37 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
     /usr/lib/jvm/java-11-openjdk-amd64
     ```
 
-    Add it to the `/etc/environemnt` file with:
+    > Add it to the `/etc/environemnt` file with:
 
-    `echo "JAVA_HOME=\"/usr/lib/jvm/java-9-openjdk-amd64\"" | sudo tee -a /etc/environment`
+    > `echo "JAVA_HOME=\"/usr/lib/jvm/java-9-openjdk-amd64\"" | sudo tee -a /etc/environment`
 
-    Close and open a new terminal. If all doesn't work then:
+    > Close and open a new terminal. If all doesn't work then:
     Launch Intellij Press: ctrl+alt+shift+S The go to Platform Settings ->
     SDKs click to add the path for your java sdk enter image description here Now your IntelliJ should be able to see it.
     </div>
-
-    Bu blockquote'in dışında...
 
 
     **TODO:** Böyle uzun kopyala yapıştır code içerikli yazılar nasıl en kolayca blockquote içine alınabiliyor?
     `> <div> paragraphs...</div>` şeklinde oluyor gibiydi ama tekrar bozuldu; markdown içinde ne kadar html kullanabilsek de
     `\n` ler ile ilgili durumlar bunlar.
+    
+    Yine SDK'yı göremiyor IDEA. Şöyle devam ettim:
+    ```
+    taha@taha-Inspiron-3558:~$ update-alternatives --config java
+    There is only one alternative in link group java (providing /usr/bin/java): /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+    Nothing to configure.
+    
+    taha@taha-Inspiron-3558:~$ java --version
+    openjdk 11.0.3 2019-04-16
+    OpenJDK Runtime Environment (build 11.0.3+7-Ubuntu-1ubuntu218.10.1)
+    OpenJDK 64-Bit Server VM (build 11.0.3+7-Ubuntu-1ubuntu218.10.1, mixed mode, sharing)
+    taha@taha-Inspiron-3558:~$ sudo apt-get install openjdk-11-jdk
+    ```
+    
+    Sorun ubuntu'da default olarak sadece JRE'nin olması ve JDK'nın olmamasıydı. Yanıltan kısım ise JRE'nin de JDK folder'ında olmasıydı.
+    Yine de kurulumdan önce `javac`'ı bulamıyorduk. Yukarıdaki kurulumdan sonra, ki aynı folder'a kurulumu eklediğim için
+     yukarıdaki environment variable'ları değiştirmeme gerek kalmadı. 
+
 
 3. Git kurulumu ve remote/local workflow'u
     - /usr/bin/git de bulunuyor, IDE otomatik olarak buradan görüy  or.
@@ -111,5 +127,17 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
             remote = origin
             merge = refs/heads/master
     ```
+
+# Gün2:
+
+Şu anda Git kurulu, IDEA kurulu, JDK kurulu.
+IDEA'da bir projede sadece tyb.github.io'yu editliyorum.
+Diğer IDEA projesinde gerçek projeyi yapacağım. 
+
+1. Boilerplate spring backend code 
+    1. API consume 
+        - Official Tumblr api'sini kullanabilmek için önce hesabımdan bir API Key alıyorum. Public/Private ya da Secret Token için.
+2. Boilerplate frontend code 
+
 
 ### References/Further reading/readings/materials
