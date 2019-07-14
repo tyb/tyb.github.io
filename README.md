@@ -537,6 +537,7 @@ git push -u origin master
 
 #### Git global config dosyasının ayarlanması
 
+**TODO: **
 
 ### Optimizing Ubuntu
 
@@ -602,5 +603,510 @@ Bunu kurarken `gdm3` ya da `sddm` GUI manager'larından birini seçtiriyor.
 #### To empty the temporary cache used by ‘apt-get’, run the command:
 
 `sudo apt-get clean`
+
+## Wrap-ups: tab closing session for previous days
+
+**şunlara bakmıştım:**
+1. > where is jdk and jre on linux
+2. > how to locate and find java installation in linux ya da how to find jdk location in ubuntu
+3. > how to add jdk path in idea in linux
+[How to setup SDK in IntelliJ IDEA?](https://stackoverflow.com/questions/43661829/how-to-setup-sdk-in-intellij-idea)
+>  To find the path where java is installed on ubuntu, you can run the following command from terminal:
+> `$ whereis java`
+> You may get something like this:
+> `java: /usr/bin/java /etc/java /usr/share/java /usr/lib/jvm`
+> Which means that the java resides at one of the above paths as for example /usr/bin/java
+> So, that directory should designate in IntelliJ. You can configure in the Project Structure, press Ctrl + Alt + Shift + S, choose Platform Settings -> SDKs, click on green button (+), select the home directory for JDK.
+4. > ubuntu jdk 11 installed but i dont have javac
+>  It seems you have installed JRE (Java Runtime Environment) only. javac comes under JDK (Java Development Kit) package.
+> To install JDK, open terminal and type following command:
+> `sudo apt-get install openjdk-7-jdk`
+>> Beni yanıldan JRE'nin JDK folder'ı altında yüklü olmasıydı, ama yine de `javac`'ın olmamasından durumu hemen anlamam gerekirdi. 
+5. How to Hibernate Ubuntu Gnome 16.04 from the GUI? 
+> `sudo systemctl hibernate`
+6. idea community edition spring boot project
+> IDEA'nın free'sinde Spring boot plugin olarak gelmiyor ve yükleyemiyorsun. Çok sorun değil, sadece spring boot projesi olarak fancy gösterimler yok.
+7. maven settings.xml for spring boot
+> global repository ve proxy ayarları içindi.
+8. why is ubuntu so slow on my laptop
+> sorun büyük oranda GNOME'dan kaynaklıydı ve ufak tefek diğer ayarları yaptım: preload, tla, indicator-cpufreq, swap space ve global olarak IDEA vmoptions -Xmx ayarları.
+9. how to open system monitor on ubuntu?
+10. Why is IntelliJ IDEA hanging on “Indexing”?
+11. spring boot rest api tutorial
+12. idea community spring boot run configuration
+13. Maven in 5 Minutes
+14. spring boot react setup settings configuration
+> Bu şekilde yazdım ama react'ın spring boot ile çok ilgisi yok, ama yine de onu da IDEA altında tutacağım.
+> Bu aslında Gün3'te yapacağım konu.
+
+## Further readings:
+- [What is the rationale for the `/usr` directory?](https://askubuntu.com/questions/130186/what-is-the-rationale-for-the-usr-directory)
+> Short version:
+> As your link already said, /usr is a place for system-wide, read-only files. So all your installed software goes there. It does not duplicate any names of / except /bin and /lib, but, originally, with a different purpose: /bin, /lib is only for binaries and libraries required for booting, while /usr/bin, /usr/lib is for all the other executables and libraries. (now be a good boy and don't ask about /sbin, this is the Short Version after all)
+> Nowadays, the distinction between "required for booting" and not has diminished, since most modern distros, including Ubuntu, cannot properly boot without several files from /usr. And that's why there is a strong movement towards merging /usr/bin and /bin, so probably in the near future (Ubuntu 12.10 perhaps?) /bin will be a symlink to /usr/bin.
+> But maybe you are confusing /usr and /usr/local? Because yes, there is (and should be) a lot of duplicated directory names. More on that later...
+
+
+# Gün3:
+
+## Öncelikle lombok, h2 ve jpa'yı da ayarlayalım.
+
+### `domain` yani `model` için okuduğum tutorial'dan `ilişki` de içeren örnekler:
+
+```java
+package io.github.tyb.domain.tutorial;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import java.time.Instant;
+import java.util.Set;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+public class Event {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private Instant date;
+    private String title;
+    private String description;
+    @ManyToMany
+    private Set<User> attendees;
+}
+```
+
+ve 
+
+```java
+package io.github.tyb.domain.tutorial;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
+import javax.persistence.*;
+import java.util.Set;
+
+@Data
+@NoArgsConstructor
+@RequiredArgsConstructor
+@Entity
+@Table(name = "user_group")
+public class Group {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    @NonNull
+    private String name;
+    private String address;
+    private String city;
+    private String stateOrProvince;
+    private String country;
+    private String postalCode;
+    @ManyToOne(cascade=CascadeType.PERSIST)
+    private User user;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade=CascadeType.ALL)
+    private Set<Event> events;
+}
+```
+
+ve de 
+
+```java
+package io.github.tyb.domain.tutorial;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class User {
+
+    @Id
+    private String id;
+    private String name;
+    private String email;
+}
+```
+
+### JPA sample:
+
+ayrıca `Spring Data JPA` daki `repository` abstraction'larını kullanıyor:
+
+```java
+package io.github.tyb.repository;
+
+import io.github.tyb.domain.tutorial.Group;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface GroupRepository extends JpaRepository<Group, Long> {
+    Group findByName(String name);
+}
+```
+
+## Controller sample'ı da bulunsun:
+
+```java
+package io.github.tyb.controller.tutorial;
+
+import io.github.tyb.domain.tutorial.Group;
+import io.github.tyb.repository.GroupRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api")
+class GroupController {
+
+    private final Logger log = LoggerFactory.getLogger(GroupController.class);
+    private GroupRepository groupRepository;
+
+    public GroupController(GroupRepository groupRepository) {
+        this.groupRepository = groupRepository;
+    }
+
+    @GetMapping("/groups")
+    Collection<Group> groups() {
+        return groupRepository.findAll();
+    }
+
+    @GetMapping("/group/{id}")
+    ResponseEntity<?> getGroup(@PathVariable Long id) {
+        Optional<Group> group = groupRepository.findById(id);
+        return group.map(response -> ResponseEntity.ok().body(response))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @PostMapping("/group")
+    ResponseEntity<Group> createGroup(@Valid @RequestBody Group group) throws URISyntaxException {
+        log.info("Request to create group: {}", group);
+        Group result = groupRepository.save(group);
+        return ResponseEntity.created(new URI("/api/group/" + result.getId()))
+                .body(result);
+    }
+
+    @PutMapping("/group/{id}")
+    ResponseEntity<Group> updateGroup(@Valid @RequestBody Group group) {
+        log.info("Request to update group: {}", group);
+        Group result = groupRepository.save(group);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @DeleteMapping("/group/{id}")
+    public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
+        log.info("Request to delete group: {}", id);
+        groupRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+}
+
+
+```
+
+## Seed ya da data initializer işini yapmak:
+
+Bunun için `org.springframework.boot.CommandLineRunner`'ı implemente ediyoruz:
+
+```java
+package io.github.tyb;
+
+import io.github.tyb.domain.tutorial.Event;
+import io.github.tyb.domain.tutorial.Group;
+import io.github.tyb.repository.GroupRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.Collections;
+import java.util.stream.Stream;
+
+@Component
+class Seeder implements CommandLineRunner {
+
+    private final GroupRepository repository;
+
+    public Initializer(GroupRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public void run(String... strings) {
+        Stream.of("Denver JUG", "Utah JUG", "Seattle JUG",
+                "Richmond JUG").forEach(name ->
+                repository.save(new Group(name))
+        );
+
+        Group djug = repository.findByName("Denver JUG");
+        Event e = Event.builder().title("Full Stack Reactive")
+                .description("Reactive with Spring Boot + React")
+                .date(Instant.parse("2018-12-12T18:00:00.000Z"))
+                .build();
+        djug.setEvents(Collections.singleton(e));
+        repository.save(djug);
+        repository.findAll().forEach(System.out::println);
+    }
+}
+```
+
+Bu kısım sanırım uygulamayı run ettiğimizde çalışıyor ve data temporary olarak tabloya atılıyor.
+> If you start your app (using ./mvnw spring-boot:run) after adding this code, you’ll see the list of groups and events displayed in your console.  
+
+## React ile bir UI oluşturmak için settings/configuration/development environment
+
+1. Create React App 
+> Create React App is a command line utility that generates React projects for you. It’s a convenient tool because it also offers commands that will build and optimize your project for production. It uses webpack under the covers for building. If you want to learn more about webpack, I recommend webpack.academy.
+    - Scaffolding için yani Code Structure/code organization/phsical code için boilerplate dosya ve klasör yapısını oluşturur
+    `yarn create react-app app`
+    - Package Manager/Dependency manager/Bundle Manager/Bundler olarak `yarn`'ı kullanır. 
+    `yarn add bootstrap@4.1.3 react-cookie@3.0.4 react-router-dom@4.3.1 reactstrap@6.5.0`
+    - Build tool olarak `webpack`'i kullanır
+    >> webpack ile component'ler dependency'leri ile birlikte build edilip (sanırım) `node` modulleri oluşturuluyor.
+    
+### yarn
+
+zaten linux distrosunda kurulu olarak geliyor.
+**TODO:** teknik detaylarına bakılacak.
+
+```
+taha@taha-Inspiron-3558:~$ yarn --version
+1.12.1
+```
+
+#### workflow:
+```
+yarn create react-app app
+cd app
+yarn add bootstrap@4.1.3 react-cookie@3.0.4 react-router-dom@4.3.1 reactstrap@6.5.0
+```
+
+#### scaffolding and setting react development environment with yarn
+
+```
+taha@taha-Inspiron-3558:~$ pwd
+/home/taha
+taha@taha-Inspiron-3558:~$ ls -ltr
+total 68
+-rw-r--r-- 1 taha taha 8980 Eki 21  2018 examples.desktop
+drwxr-xr-x 2 taha taha 4096 Eki 21  2018 Videos
+drwxr-xr-x 2 taha taha 4096 Eki 21  2018 Templates
+drwxr-xr-x 2 taha taha 4096 Eki 21  2018 Public
+drwxr-xr-x 2 taha taha 4096 Eki 21  2018 Pictures
+drwxr-xr-x 2 taha taha 4096 Eki 21  2018 Music
+drwxr-xr-x 3 taha taha 4096 Eki 24  2018 git
+drwxr-xr-x 4 taha taha 4096 Eki 25  2018 eclipse-workspace
+drwxr-xr-x 3 taha taha 4096 Eki 30  2018 Desktop
+drwxr-xr-x 2 taha taha 4096 Eki 31  2018 Documents
+drwxr-xr-x 2 taha taha 4096 Haz 23 22:23 Downloads
+-rw-r--r-- 1 taha taha    0 Haz 29 21:12 troubleshoot-logs.txt
+drwxr-xr-x 5 taha taha 4096 Tem 13 13:38 IdeaProjects
+drwxr-xr-x 5 taha taha 4096 Tem 13 15:57 snap
+-rw-rw-r-- 1 taha taha   86 Tem 14 17:34 yarn.lock
+drwxrwxr-x 2 taha taha 4096 Tem 14 17:34 node_modules
+taha@taha-Inspiron-3558:~$ cd IdeaProjects/
+taha@taha-Inspiron-3558:~/IdeaProjects$ ls -ltr
+total 12
+drwxr-xr-x 3 taha taha 4096 Tem 13 15:56 tyb.github.io
+drwxr-xr-x 6 taha taha 4096 Tem 14 03:37 tumblrConsumer
+drwxr-xr-x 4 taha taha 4096 Tem 14 17:58 tyb_github
+taha@taha-Inspiron-3558:~/IdeaProjects$ cd tumblrConsumer/
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ yarn create react-app reactClient
+yarn create v1.12.1
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+success Installed "create-react-app@3.0.1" with binaries:
+      - create-react-app
+[####################################################################] 92/92Could not create a project called "reactClient" because of npm naming restrictions:
+  *  name can no longer contain capital letters
+error Command failed.
+Exit code: 1
+Command: /home/taha/.yarn/bin/create-react-app
+Arguments: reactClient
+Directory: /home/taha/IdeaProjects/tumblrConsumer
+Output:
+
+info Visit https://yarnpkg.com/en/docs/cli/create for documentation about this command.
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ yarn create react-app react_client
+yarn create v1.12.1
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+success Installed "create-react-app@3.0.1" with binaries:
+      - create-react-app
+[####################################################################] 92/92
+Creating a new React app in /home/taha/IdeaProjects/tumblrConsumer/react_client.                                                                          
+
+Installing packages. This might take a couple of minutes.
+Installing react, react-dom, and react-scripts...
+
+yarn add v1.12.1
+[1/4] Resolving packages...
+warning react-scripts > fsevents@2.0.6: Please update: there are crash fixes
+[2/4] Fetching packages...
+info fsevents@1.2.9: The platform "linux" is incompatible with this module.
+info "fsevents@1.2.9" is an optional dependency and failed compatibility check. Excluding it from installation.
+info fsevents@2.0.6: The platform "linux" is incompatible with this module.
+info "fsevents@2.0.6" is an optional dependency and failed compatibility check. Excluding it from installation.
+info fsevents@2.0.6: The engine "node" is incompatible with this module. Expected version "^8.16.0 || ^10.6.0 || >=11.0.0". Got "8.11.4"
+[3/4] Linking dependencies...
+warning "react-scripts > @typescript-eslint/eslint-plugin@1.6.0" has unmet peer dependency "typescript@*".
+warning "react-scripts > @typescript-eslint/parser@1.6.0" has unmet peer dependency "typescript@*".
+warning "react-scripts > ts-pnp@1.1.2" has unmet peer dependency "typescript@*".
+warning "react-scripts > @typescript-eslint/eslint-plugin > @typescript-eslint/typescript-estree@1.6.0" has unmet peer dependency "typescript@*".
+warning "react-scripts > @typescript-eslint/eslint-plugin > tsutils@3.10.0" has unmet peer dependency "typescript@>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev".
+[4/4] Building fresh packages...
+success Saved lockfile.
+success Saved 11 new dependencies.
+info Direct dependencies
+├─ react-dom@16.8.6
+├─ react-scripts@3.0.1
+└─ react@16.8.6
+info All dependencies
+├─ babel-preset-react-app@9.0.0
+├─ eslint-config-react-app@4.0.1
+├─ fork-ts-checker-webpack-plugin@1.1.1
+├─ microevent.ts@0.1.1
+├─ react-app-polyfill@1.0.1
+├─ react-dev-utils@9.0.1
+├─ react-dom@16.8.6
+├─ react-error-overlay@5.1.6
+├─ react-scripts@3.0.1
+├─ react@16.8.6
+└─ worker-rpc@0.1.1
+Done in 397.95s.
+
+Success! Created react_client at /home/taha/IdeaProjects/tumblrConsumer/react_client
+Inside that directory, you can run several commands:
+
+  yarn start
+    Starts the development server.
+
+  yarn build
+    Bundles the app into static files for production.
+
+  yarn test
+    Starts the test runner.
+
+  yarn eject
+    Removes this tool and copies build dependencies, configuration files
+    and scripts into the app directory. If you do this, you can’t go back!
+
+We suggest that you begin by typing:
+
+  cd react_client
+  yarn start
+
+Happy hacking!
+Done in 415.06s.
+```
+
+Buradan görüleceği üzere, `typescript`, `eslint`, `babel` vb. ile de ilgileneceğiz.
+
+Ayrıca `yarn create react-app app` iki şey yapıyor:
+1. `yarn create v1.12.1`: bu sanırım sadece dependency listesiyle beraber scaffolding yapan kısım.
+Ayrıca `/home/taha/IdeaProjects/tumblrConsumer/react_client` altında dosyaları oluşturuyor. 
+2. hemen ardından `yarn add v1.12.1` çalışıyor ki bu da sanırım dependency listesinden dependency'leri yani `module` leri yani `package` ları yani `library` leri alıp 
+kendi içlerindeki package'lar ile birlikte indirip bunları resolve ediyor ve link ediyor ardından da package'ları oluşturuyor.
+
+##### Peki bu dependency'ler/module'ler/library'ler nereye ve nasıl indi?
+
+Ve `react_client` folder'ına bakınca zaten olay aydınlanıyor. Bu bildiğin `node.js` projesi.
+`node_modules` folder'ı ile `package_json` direkt görünüyor. 
+
+package_json'daki temel dependency'ler şöyle:
+
+```json
+{
+  "name": "react_client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-scripts": "3.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
+```
+
+**Yarn da aslında npm ya da npx gibi**. Yani `npm` ya da `npx` de kullanabilirdik:
+
+```
+npx create-react-app my-app
+cd my-app
+npm start
+```
+
+ya da 
+
+```
+npm init react-app my-app
+```
+
+###### References
+
+1. [facebook - getting started](https://facebook.github.io/create-react-app/docs/getting-started)
+2. [How do I get globally installed node modules to run on terminal](https://stackoverflow.com/questions/50556589/how-do-i-get-globally-installed-node-modules-to-run-on-terminal)
+>  If you are asking how to start the application, you can use
+> `node server.js`
+> if your entrypoint file is called server. Alternatively use npm start, documented here: https://docs.npmjs.com/cli/start
+> To see what is installed,
+> `npm -g list`
+> will tell you what is installed globally.
+3. [Where does npm install the packages?](https://flaviocopes.com/where-npm-install-packages/)
+
 
 # References/Further reading/readings/materials
