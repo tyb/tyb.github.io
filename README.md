@@ -493,7 +493,50 @@ public class TumblerConsumerController {
 
 #### Run configurations:
 `Run > Edit Configurations > Templates > Application` olarak
-`name`, Configurations tab'ında Main class ve VM Options, working directory, classpath ve jre ve de öncesinde build alınsın vs. isteniyorsa onlar belirtilir.
+`name`, Configurations tab'ında Main class ve VM Options, working directory, classpath ve jre 
+ve de öncesinde build alınsın vs. isteniyorsa onlar belirtilir.
+
+#### Localde yeni oluşturulmuş bu projenin git ile ilişkilendirilmesi
+1. Local'de: proje path'indeyken `git init` dememiz gerekecekti ama IDEA VCS altından yapabiliriz.
+oluşan config dosyasına proje folder'ında .git ismiyle oluşturulmuş repo'daki config dosyasından bakarsak:
+```
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+```
+2. Local'de git ile ilişkilendirdikten sonra commit diyerek yine IDEA VCS üzerinden yaptık. 
+3. Remote eklemek için IDEA CVS de Git > Remotes kısmında github adresimi ekleyeceğim, sonrasında config dosyasına IDE'nin GUI'sinden remote bilgisini oluşturmuş olacağız.
+    - Ama öncesinde github'da repo'nun ismini yazıp oluşturmak gerekiyor. 
+    - `origin` etiketiyle `https://github.com/tyb/tumblrConsumer.git` i ekledim. 
+    Config dosyamız aşağıdaki gibi oldu:
+    ```
+    [core]
+        repositoryformatversion = 0
+        filemode = true
+        bare = false
+        logallrefupdates = true
+    [remote "origin"]
+        url = https://github.com/tyb/tumblrConsumer.git
+        fetch = +refs/heads/*:refs/remotes/origin/*
+    ```   
+    Aslında yaptığımız `git remote add origin https://github.com/tyb/tumblrConsumer.git` idi. 
+4. Push dersek remote'a gönderir.
+`git push -u origin master`
+
+Şu ana kadar yapılan işlemler aslında:
+```
+echo "# tumblrConsumer" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin https://github.com/tyb/tumblrConsumer.git
+git push -u origin master
+```
+
+#### Git global config dosyasının ayarlanması
+
 
 ### Optimizing Ubuntu
 
