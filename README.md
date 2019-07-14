@@ -375,6 +375,189 @@ ayrıca istenirse şu şekilde daha custom repo eklenebilir:
     </pluginRepositories>
 ```
 
+### Güne retro bir bakış
+Ubuntu gerçekten berbat! Yani linux'a sözüm yok, ama yıllar geçse de şu Gnome, KDE bilmem ne bir türlü adam olamadı. 
+Mühendislik adına gerçekten büyük bir ayıp bu. 
 
+Bugün öncelikle sadece bir hibernate'e alayım dedim, ama hibernate için `ALT + power` tuşuna basmak gerekiyordu, bunu farkeder etmez,
+Kapatmak istiyor musun uyarı mesajına cancel dediğim halde bilgisayar shutdown oldu. 
+
+Yeniden açtığımda bu defa IDEA saçmalamaya başladı. IDEA'nın da Eclipse'in de Allah nasıl biliyorsa öyle yapsın! 
+Sanırım sorun, IDEA force bir şekilde kapatıldığından `indexing` dediği şeyi yapamadı. Tekrar açtığımda da `Loading project...` kısmında takılı kaldı.
+
+`File > Invalidate caches & restart` diyerek çözme olaylarına girdik yine. Neyse bu şekilde yaptım bu defa yine takılmalar oldu. 
+
+`/snap/intellij-idea-community/152/bin` altında `idea.vmoptions` ve `idea64.vmoptions` dan IDEA'yı daha fazla RAM kullanması için optimize etmek istedim.
+Readonly yetkisinden dolayı editleyemedim. `chown`, `chmod 777 -R ...` denedim filan ama olmadı. 
+
+`Help > Edit Custom VM Options` dan editleyebildim:
+
+```
+# custom IntelliJ IDEA VM options
+
+-Xms1024m
+-Xmx2048m
+-XX:ReservedCodeCacheSize=240m
+-XX:+UseConcMarkSweepGC
+-XX:SoftRefLRUPolicyMSPerMB=50
+-ea
+-Dsun.io.useCanonCaches=false
+-Djava.net.preferIPv4Stack=true
+-Djdk.http.auth.tunneling.disabledSchemes=""
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:-OmitStackTraceInFastThrow
+-Dawt.useSystemAAFontSettings=lcd
+-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine
+-Dsun.tools.attach.tmp.only=true
+```
+
+Sonra uygulamayı yaparken, senkron olarak ayrı projede not aldığım README.md dosyasını bir türlü açamadı IDEA.
+`Markdown Navigator`'u kurmuştum plugin olarak daha önce ve IDEA kendisinin `Markdown Support` plugin'i ile çakıştığını birinden birini seçmem gerektiğini söyledi.
+Default'u seçip geçmiştim ve güzel çalışıyordu ama o yanlışlıkla Shutdown'dan sonra bozuldu. Bu defa Settings'den diğerini seçtim ve sonunda uygulama geliştirmeye devam edebildim.
+
+Son sözüm DELL bilgisayarıma. `Affordable` olduğu için aldığım bu MVP developer bilgisayarım hem ses çıkartıyor hem de biraz ısınıyor. 
+Ayrıca hem gömülü hem harici ekran kartı var ama yine Ubuntu hazretleri bir türlü NVIDIA driver'ını yükleyemediğinden gömülüyü kullanmak zorunda kalıyorum.
+
+Bir ara NVIDIA driver'ı kurmak için türlü yollar denerken sistem göçtü format atıldı ve Ruby ile %70'ini yaptığım proje de silindi.
+Capslock tam algılamıyor gibi bu da deli ediyor beni. 
+
+Ayrıcaaaa, ben bu bilgisayarı elimle bakmadan internetten okuyarak almıştım ama beyefendiler klavyede yön tuşlarını minnacık yapmışlar. Bu da durduk yere beni deli ediyor. 
+
+Neyse, GOD DAMN UBUNTU!, GOD DAMN DELL! diyip geçiyorum.
+
+## Boilerplate MVP REST api oluşturup main class ile birlikte build etmek:
+
+Main:
+```java
+package io.github.tyb;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+
+public class TumblrConsumerRestApiApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TumblrConsumerRestApiApplication.class, args);
+    }
+
+}
+```
+
+application.properties için:
+`server.port=8080`
+
+ve pom.xml'de
+
+```xml
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+```
+
+
+Controller:
+```java
+package io.github.tyb.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
+
+@Controller
+public class TumblerConsumerController {
+
+    @RequestMapping(method = RequestMethod.GET, value="/tumblr/posts")
+    @ResponseBody
+    public List<?> getPosts() {
+        return null;
+    }
+
+}
+```
+
+#### Run configurations:
+`Run > Edit Configurations > Templates > Application` olarak
+`name`, Configurations tab'ında Main class ve VM Options, working directory, classpath ve jre ve de öncesinde build alınsın vs. isteniyorsa onlar belirtilir.
+
+### Optimizing Ubuntu
+
+#### Install preload to speed up application load time:
+> Preload is a daemon that runs in the background and analyzes user behavior and frequently run applications. 
+
+`sudo apt-get install preload`
+
+
+#### Reduce overheating:
+> Overheating is a common problem in computers these days. An overheated computer runs quite slow. It takes ages to open a program when your CPU fan is running like Usain Bolt. 
+> There are two tools which you can use to reduce overheating and thus get a better system performance in Ubuntu, TLP and CPUFREQ.
+> To install and use TLP, use the following commands in a terminal:
+
+```
+sudo add-apt-repository ppa:linrunner/tlp
+sudo apt-get update
+sudo apt-get install tlp tlp-rdw
+sudo tlp start
+```
+
+> You don’t need to do anything after installing TLP. It works in the background.
+> To install CPUFREQ indicator use the following command:
+`sudo apt-get install indicator-cpufreq`
+> Restart your computer and use the Powersave mode in it:
+
+Burada `cpufrequtils` diye bir başka tool var, buna da bak ve indicator-cpufreq kurulduktan sonra adam GUI'den powersave modu seçmiş. 
+O GUI nerede?
+
+#### Increasing swap space
+[Change swap size in Ubuntu](https://bogdancornianu.com/change-swap-size-in-ubuntu/)
+```
+taha@taha-Inspiron-3558:~$ sudo swapoff -a
+[sudo] password for taha: 
+taha@taha-Inspiron-3558:~$ sudo dd if=/dev/zero of=/swapfile bs=1M count=8000
+8000+0 records in
+8000+0 records out
+8388608000 bytes (8,4 GB, 7,8 GiB) copied, 154,837 s, 54,2 MB/s
+taha@taha-Inspirn-3558:~$ sudo mkswap /swapfile
+mkswap: /swapfile: insecure permissions 0644, 0600 suggested.
+Setting up swapspace version 1, size = 7,8 GiB (8388603904 bytes)
+no label, UUID=159f8da8-1032-447a-8145-bb15bcbb7de7
+taha@taha-Inspiron-3558:~$ sudo swapon /swapfile
+swapon: /swapfile: insecure permissions 0644, 0600 suggested.
+taha@taha-Inspiron-3558:~$ grep SwapTotal /proc/meminfo
+SwapTotal:       8191996 kB
+
+```
+
+#### Lightweight GUI managers instead of GNOME
+[installing xfce](https://itsfoss.com/install-xfce-desktop-xubuntu/)
+
+[ya da](https://www.techradar.com/how-to/how-to-speed-up-ubuntu-1804) 
+
+`sudo apt-get install lubuntu-desktop`
+
+Bunu kurarken `gdm3` ya da `sddm` GUI manager'larından birini seçtiriyor.
+
+#### monitoring startup services
+`service --status-all `
+`service tla status`
+
+#### To empty the temporary cache used by ‘apt-get’, run the command:
+
+`sudo apt-get clean`
 
 # References/Further reading/readings/materials
