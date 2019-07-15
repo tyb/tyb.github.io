@@ -375,11 +375,11 @@ ayrıca istenirse şu şekilde daha custom repo eklenebilir:
     </pluginRepositories>
 ```
 
-### Güne retro bir bakış
+###retro bir bakış
 Ubuntu gerçekten berbat! Yani linux'a sözüm yok, ama yıllar geçse de şu Gnome, KDE bilmem ne bir türlü adam olamadı. 
 Mühendislik adına gerçekten büyük bir ayıp bu. 
 
-Bugün öncelikle sadece bir hibernate'e alayım dedim, ama hibernate için `ALT + power` tuşuna basmak gerekiyordu, bunu farkeder etmez,
+öncelikle sadece bir hibernate'e alayım dedim, ama hibernate için `ALT + power` tuşuna basmak gerekiyordu, bunu farkeder etmez,
 Kapatmak istiyor musun uyarı mesajına cancel dediğim halde bilgisayar shutdown oldu. 
 
 Yeniden açtığımda bu defa IDEA saçmalamaya başladı. IDEA'nın da Eclipse'in de Allah nasıl biliyorsa öyle yapsın! 
@@ -586,6 +586,26 @@ taha@taha-Inspiron-3558:~$ grep SwapTotal /proc/meminfo
 SwapTotal:       8191996 kB
 
 ```
+
+making swap size permanent:
+
+```
+sudo vim /etc/fstab
+```
+
+add
+
+```
+/swapfile none swap sw 0 0
+```
+
+default swappiness value 60 (1-100)
+
+`sudo sysctl vm.swappiness=10`
+
+permanent olması için
+
+`/etc/sysctl.conf` dosyasına `vm.swappiness=10` satırı eklenir.
 
 #### Lightweight GUI managers instead of GNOME
 [installing xfce](https://itsfoss.com/install-xfce-desktop-xubuntu/)
@@ -834,7 +854,7 @@ class GroupController {
 
 ```
 
-## Seed ya da data initializer işini yapmak:
+## Database Seed ya da data initializer işini yapmak:
 
 Bunun için `org.springframework.boot.CommandLineRunner`'ı implemente ediyoruz:
 
@@ -1108,5 +1128,809 @@ npm init react-app my-app
 > will tell you what is installed globally.
 3. [Where does npm install the packages?](https://flaviocopes.com/where-npm-install-packages/)
 
+
+## Using Spring Boot CLI
+
+### Scaffolding fastest way
+
+`spring init --name=flyway-demo --dependencies=web,mysql,data-jpa,flyway flyway-demo`
+
+## Configuring MySQL and Hibernate for Spring Boot
+
+Spring boot uygulamasını başlattığımıda connect olurken ortaya çıkan yetki sorunlarını genel olarak aşmak için:
+
+> Change the file my.cnf (in my Ubuntu-system he is placed at `/etc/mysql/my.cnf`). In the end i added that code:
+
+```
+root@taha-Inspiron-3558:/var/log/mysql# nano /etc/mysql/my.cnf
+[mysqld]
+skip-grant-tables
+root@taha-Inspiron-3558:/var/log/mysql# /etc/init.d/mysql restart
+[ ok ] Restarting mysql (via systemctl): mysql.service.
+```
+
+bundan sonra artık `sudo mysql -u root -p` demeden doğrudan `mysql -u root -p` diyerek girebildim. 
+
+artık `ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password` hatasını geçmiş olduk.
+
+hemen sonra root haricinde bir kullanıcı oluşturdum ve datasource'uma bunu verdim.
+
+```
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'taha'@'localhost' IDENTIFIED BY '1'; Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> SELECT User, Host, authentication_string FROM mysql.user;
++------------------+-----------+-------------------------------------------+
+| User             | Host      | authentication_string                     |
++------------------+-----------+-------------------------------------------+
+| root             | localhost | *E6CC90B878B948C35E92B003C792C46C58C4AF40 |
+| mysql.session    | localhost | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| mysql.sys        | localhost | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| debian-sys-maint | localhost | *ED020BAF618432391D17273887FE59B5DFF1E334 |
+| taha             | localhost | *E6CC90B878B948C35E92B003C792C46C58C4AF40 |
++------------------+-----------+-------------------------------------------+
+5 rows in set (0.00 sec)
+mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> quit
+Bye
+taha@taha-Inspiron-3558:/var/log/mysql$ sudo /etc/init.d/mysql restart
+```
+
+hibernate database initialization ya da dll creation işini yapabilmek için veritabanının olması gerekiyor, çünkü connection string'inde yer alacak:
+
+```
+mysql> CREATE DATABASE tumblr;
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| tumblr             |
++--------------------+
+5 rows in set (0.03 sec)
+
+mysql> use tumblr;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> show tables;
+```
+
+aşağıda detaylarını açıklayacağım config dosyası ki şunları içeriyor:
+1. datasource ve dolayısıyla hibernate entity manager 
+2. ddl yani database schema autocreation from entities yani database initialization
+3. generating ddl creation script without creating database schema.
+
+application.properties
+```
+server.port=8080
+
+spring.datasource.url=jdbc:mysql://localhost:3306/tumblr
+spring.datasource.username=taha
+spring.datasource.password=1
+spring.datasource.testWhileIdle = true
+spring.datasource.validationQuery = SELECT 1
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+
+spring.jpa.open-in-view=false
+spring.jpa.database-platform=org.hibernate.dialect.MySQL5InnoDBDialect
+spring.jpa.generate-ddl=true
+spring.jpa.show-sql=true
+
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.hibernate.naming_strategy=org.hibernate.cfg.ImprovedNamingStrategy
+#spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+#spring.jpa.hibernate.use-new-id-generator-mappings=false
+
+# How to generate a ddl creation script with a modern Spring Boot + Data JPA and Hibernate setup?
+#spring.jpa.properties.javax.persistence.schema-generation.create-source=metadata
+#spring.jpa.properties.javax.persistence.schema-generation.scripts.action=create
+#spring.jpa.properties.javax.persistence.schema-generation.scripts.create-target=create.sql
+#spring.jpa.properties.hibernate.hbm2ddl.auto=create
+#spring.jpa.properties.hibernate.format_sql=true
+#spring.jpa.properties.hibernate.default_schema = schemaName
+
+spring.flyway.enabled=false
+
+# Logs sql statements
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type=TRACE
+```
+
+## database migrations and migration files:
+
+Migration'ları `liquibase` ya da `flyway` ile yapabiliriz. 
+Aslında production-scale için hibernate'in Entity'lerde db schema autocreation'u yerine migration'ları kullanmak doğru olanı. 
+Ancak RAD için hibernate database initialization/database schema autocreation ile başlayabiliriz, hatta ileride detaylandıracağım; 
+`profile` set ederek geliştirme ortamı için birini prod için diğerini set edebiliriz.
+
+bugün yaşağıdığım sorunlar ddl autocreation, migrations ve ddl generation'ları birlikte kullanmak ile de ilgiliydi:
+1. sadece birini bir anda yapmak gerekir. ddl autocreation yapılacaksa:
+```
+spring.jpa.open-in-view=false
+spring.jpa.database-platform=org.hibernate.dialect.MySQL5InnoDBDialect
+spring.jpa.generate-ddl=true
+spring.jpa.show-sql=true
+
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.hibernate.naming_strategy=org.hibernate.cfg.ImprovedNamingStrategy
+#spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+#spring.jpa.hibernate.use-new-id-generator-mappings=false
+```
+sadece bu olmalı. 
+
+```
+#How to generate a ddl creation script with a modern Spring Boot + Data JPA and Hibernate setup?
+#spring.jpa.properties.javax.persistence.schema-generation.create-source=metadata
+#spring.jpa.properties.javax.persistence.schema-generation.scripts.action=create
+#spring.jpa.properties.javax.persistence.schema-generation.scripts.create-target=create.sql
+```
+
+bu **olmamalı**.
+
+2. eğer ddl generation yapılacaksa sadece aşağıdaki kısım olmalı, eğer ikisi de olursa sadece generate eder, veritabanında oluşturmaz.
+
+```
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.hibernate.naming_strategy=org.hibernate.cfg.ImprovedNamingStrategy
+
+#How to generate a ddl creation script with a modern Spring Boot + Data JPA and Hibernate setup?
+spring.jpa.properties.javax.persistence.schema-generation.create-source=metadata
+spring.jpa.properties.javax.persistence.schema-generation.scripts.action=create
+spring.jpa.properties.javax.persistence.schema-generation.scripts.create-target=create.sql
+```
+
+bu şekilde çalıştığında ddl generation script'ini project directory root'unda `create.sql` ismiyle oluşturur.
+
+3. migrations kullanılacaksa `/src/main/resources/db/migration` altında `Vx.x__init.sql` formatlarında dosyalar oluşturulmalı. 
+Burada dikkat edilmesi gereken, migrations ve ddl creation'un aynı anda olması isteniyorsa flyway önce/sonra çalışması için konfigüre edilmeli. 
+flyway script'leri olup da çalışmasın isteniyorsa properties'de:
+`spring.flyway.enabled=false` eklenmeli. 
+
+4. loading initial data/seeding/sampling - eğer seed yapılacaksa yani DML ile fake data ya da structured data db'ye populate edilecekse `CommandLineRunner` kullanılabilir. 
+Ancak bu da ddl creation'dan önce çalışıyor olabilir, dikkat etmek gerekir. 
+`ApplicationRunner` da kullanılabilir. 
+Uygulama run olurken bunlar çalışır. 
+
+```java
+package io.github.tyb;
+
+import io.github.tyb.domain.tutorial.Event;
+import io.github.tyb.domain.tutorial.Group;
+import io.github.tyb.repository.GroupRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.Collections;
+import java.util.stream.Stream;
+
+
+/*TODO:
+ Bu hibernate DLL creation'dan önce çalıştığından table doesn't exist hatası alıyor.
+ */
+class seeder {
+
+}
+/*
+@Component
+class Seeder implements CommandLineRunner {
+
+    private final GroupRepository repository;
+
+    public Seeder(GroupRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public void run(String... strings) {
+        Stream.of("Denver JUG", "Utah JUG", "Seattle JUG",
+                "Richmond JUG").forEach(name ->
+                repository.save(new Group(name))
+        );
+
+        Group djug = repository.findByName("Denver JUG");
+        Event e = Event.builder().title("Full Stack Reactive")
+                .description("Reactive with Spring Boot + React")
+                .date(Instant.parse("2018-12-12T18:00:00.000Z"))
+                .build();
+        djug.setEvents(Collections.singleton(e));
+        repository.save(djug);
+        repository.findAll().forEach(System.out::println);
+    }
+}
+*/
+
+```
+
+programmatically:
+You can catch ApplicationReadyEvent then insert demo data, for example:
+
+```java
+@Component
+public class DemoData {
+
+    @Autowired
+    private final EntityRepository repo;
+
+    @EventListener
+    public void appReady(ApplicationReadyEvent event) {
+
+        repo.save(new Entity(...));
+    }
+}
+```
+
+Or you can implement CommandLineRunner or ApplicationRunner, to load demo data when an application is fully started:
+
+```java
+@Component
+public class DemoData implements CommandLineRunner {
+
+    @Autowired
+    private final EntityRepository repo;
+
+    @Override
+    public void run(String...args) throws Exception {
+
+        repo.save(new Entity(...));
+    }
+}
+```
+
+```java
+@Component
+public class DemoData implements ApplicationRunner {
+
+    @Autowired
+    private final EntityRepository repo;
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+
+        repo.save(new Entity(...));
+    }
+}
+```
+
+Or even implement them like a Bean right in your Application (or other 'config') class:
+
+```java
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+    @Bean
+    public CommandLineRunner demoData(EntityRepository repo) {
+        return args -> { 
+
+            repo.save(new Entity(...));
+        }
+    }
+}
+```
+
+ya da 
+
+```java
+@SpringBootApplication  
+public class Application {
+
+@Autowired
+private UserRepository userRepository;
+
+public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+}
+
+@Bean
+InitializingBean sendDatabase() {
+    return () -> {
+        userRepository.save(new User("John"));
+        userRepository.save(new User("Rambo"));
+      };
+   }
+}
+```
+
+5. Eğer `import.sql` ile migrations ya da diğerleri kullanılmadan schema'nın son halini ve DML ifadelerini tek bir bulk dosyada tutup bunu up-to-date tutacaksak
+bunun yüklemesi için de ddl autocreation'u devre dışı bırakmak gerekir.
+
+> Spring Boot can automatically create the schema (DDL scripts) of your DataSource and initialize it (DML scripts). It loads SQL from the standard root classpath locations: schema.sql and data.sql, respectively. In addition, Spring Boot processes the schema-${platform}.sql and data-${platform}.sql files (if present), where platform is the value of spring.datasource.platform. This allows you to switch to database-specific scripts if necessary. For example, you might choose to set it to the vendor name of the database (hsqldb, h2, oracle, mysql, postgresql, and so on).
+
+Bunun için:
+`spring.datasource.initialization-mode=always` -> embedded db'ler yerine hepsinde bu işlemi yapması için.
+
+ve ddl autocreation olmamalı:
+
+`spring.jpa.hibernate.ddl-auto=none`
+
+ayrıca,
+
+> If you really want to use the hibernate property prefix it with spring.jpa.properties. as those are added as is as properties to the EntityManagerFactory. See here in the Spring Boot reference guide.
+
+`spring.jpa.properties.hibernate.hbm2ddl.import_files=file1.sql,file2.sql`
+
+> However you can also use the spring.datasource.data and spring.datasource.schema properties to your advantage. They default to respectively data and schema. As you can see in the DataSourceInitializer class. You can also set them and they take a comma separated list of resources.
+
+`spring.datasource.data=classpath:/data-domain.sql,file:/c:/sql/data-reference.sql,data-complex.sql`
+
+from [Multiple SQL import files in Spring Boot](https://stackoverflow.com/questions/24508223/multiple-sql-import-files-in-spring-boot)
+
+> It gets even better because the resource loading also allows loading resources with ant-style patterns.
+
+```
+spring.datasource.data=/META-INF/sql/init-*.sql
+spring.datasource.schema=/META-INF/sql/schema-*.sql 
+```
+
+ve de 
+
+`spring.datasource.data=classpath:accounts.sql, classpath:books.sql, classpath:reviews.sql`
+
+### Creating a Flyway Migration script
+
+Formatını yukarıda belirttim. 
+Birinden birini kullanmak gerekir. 
+
+from [Spring Boot: Hibernate and Flyway boot order](https://stackoverflow.com/questions/37097876/spring-boot-hibernate-and-flyway-boot-order)
+
+> I had the same issue.
+
+> I wanted my schema to be created by hibernate because of it's database independence. I already went through the trouble of figuring out a nice schema for my application in my jpa classes, I don't like repeating myself.
+
+> But I want some data initialization to be done in a versioned manner which flyway is good at.
+
+> Spring boot runs flyway migrations before hibernate. To change it I overrode the spring boot initializer to do nothing. Then I created a second initializer that runs after hibernate is done. All you need to do is add this configuration class:
+
+```java
+import org.flywaydb.core.Flyway;
+import org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+
+@Configuration
+public class MigrationConfiguration {
+
+
+    /**
+     * Override default flyway initializer to do nothing
+     */
+    @Bean
+    FlywayMigrationInitializer flywayInitializer(Flyway flyway) {
+        return new FlywayMigrationInitializer(flyway, (f) ->{} );
+    }
+
+
+    /**
+     * Create a second flyway initializer to run after jpa has created the schema
+     */
+    @Bean
+    @DependsOn("entityManagerFactory")
+    FlywayMigrationInitializer delayedFlywayInitializer(Flyway flyway) {
+        return new FlywayMigrationInitializer(flyway, null);
+    }
+}
+```
+
+> That code needs java 8, If you have java 7 or earlier, replace (f)->{} with an inner class that implements FlywayMigrationStrategy
+
+> Of course you can do this in xml just as easily.
+
+> Make sure to add this to your application.properties:
+
+`flyway.baselineOnMigrate = true`
+
+### generating a ddl creation script with Spring Data JPA Hibernate - schema generation
+
+[How to generate a ddl creation script with a modern Spring Boot + Data JPA and Hibernate setup?](https://stackoverflow.com/questions/36966337/how-to-generate-a-ddl-creation-script-with-a-modern-spring-boot-data-jpa-and-h)
+
+[Database Initialization](https://docs.spring.io/spring-boot/docs/current/reference/html/howto-database-initialization.html)
+> An SQL database can be initialized in different ways depending on what your stack is. Of course, you can also do it manually, provided the database is a separate process. It is recommended to use a single mechanism for schema generation.
+> JPA has features for DDL generation, and these can be set up to run on startup against the database. 
+
+Yukarıda belirttim. 
+
+### to insert simple test data by implementing a ApplicationRunner
+
+Yukarıda `CommandLineRunner` versiyonu var. 
+
+## installing and mysql server on ubuntu
+
+### How can I check if mysql is installed on ubuntu?
+
+1. `dpkg --get-selections | grep mysql`
+2. `which mysqld`
+> mysql" may be found even if mysql and mariadb is uninstalled, but not "mysqld". It is faster than `rpm -qa | grep mysqld`.
+
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ which mysql
+/usr/bin/mysql
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ which mysqld
+/usr/sbin/mysqld
+```
+
+3. `mysql --version`
+4. `locate mysqld_safe`
+5. `ls /etc/init.d | grep mysql`
+6. `ldconfig -p | grep mysqlclient`
+
+
+yani ubuntu ile beraber kurulu olarak gelmiş mysql server.
+
+### installation
+
+```
+sudo apt-get update
+sudo apt-get install mysql-server
+```
+
+> The installer installs MySQL and all dependencies.
+> After installation is complete, the mysql_secure_installation utility runs. This utility prompts you to define the mysql root password and other security related options, including removing remote access to the root user and setting the root password.
+
+#### allow remote access:
+
+`sudo ufw allow mysql`
+> If you have iptables enabled and want to connect to the MySQL database from another machine, you must open a port in your server’s firewall (the default port is 3306). You don’t need to do this if the application that uses MySQL is running on the same server.
+
+### mysql server servisini yönetmek
+
+servisin durumuna bakarak:
+
+`sudo service mysql status`
+
+```
+mysql.service - MySQL Community Server
+   Loaded: loaded (/lib/systemd/system/mysql.service; enabled; vendor preset: 
+   Active: active (running) since Sun 2019-07-14 23:34:42 +03; 11min ago
+  Process: 28645 ExecStart=/usr/sbin/mysqld --daemonize --pid-file=/run/mysqld
+  Process: 28616 ExecStartPre=/usr/share/mysql/mysql-systemd-start pre (code=e
+ Main PID: 28647 (mysqld)
+    Tasks: 28 (limit: 4195)
+   Memory: 167.9M
+   CGroup: /system.slice/mysql.service
+           └─28647 /usr/sbin/mysqld --daemonize --pid-file=/run/mysqld/mysqld.
+
+Tem 14 23:34:35 taha-Inspiron-3558 systemd[1]: Starting MySQL Community Server
+Tem 14 23:34:42 taha-Inspiron-3558 systemd[1]: Started MySQL Community Server.
+```
+
+ya da process olarak bakarak
+
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ ps aux | grep mysql
+mysql    28647  0.1  4.2 1390160 166488 ?      Sl   23:34   0:01 /usr/sbin/mysqld --daemonize --pid-file=/run/mysqld/mysqld.pid
+```
+
+ya da dinlediği port üzerinden
+
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo lsof -i:3306
+COMMAND   PID  USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+mysqld  28647 mysql   27u  IPv4 223956      0t0  TCP localhost:mysql (LISTEN)
+
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo netstat -vulntp |grep -i mysql
+tcp        0      0 127.0.0.1:3306          0.0.0.0:*               LISTEN      28647/mysqld 
+```
+
+ya da `mysqladmin` ile:
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ mysqladmin processlist
+mysqladmin: connect to server at 'localhost' failed
+error: 'Access denied for user 'taha'@'localhost' (using password: NO)'
+```
+
+#### mysql server servisi başlatmak:
+
+`systemctl start mysql`
+
+ya da 
+
+`sudo /etc/init.d/mysql start`
+
+##### launch at reboot/ on startup
+
+`systemctl enable mysql`
+
+#### çalışan servisin durumuna bakmak:
+
+`sudo systemctl status mysql`
+
+### working on mysql server 
+
+#### with mysql shell
+
+`/usr/bin/mysql -u root -p`
+
+### forgotten root password 
+
+#### resetting root password
+
+1. `sudo /etc/init.d/mysql stop`
+> stopping mysql server service
+2. `sudo mysqld_safe --skip-grant-tables &`
+> starting mysql without a password
+
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ 2019-07-14T21:12:27.544395Z mysqld_safe Logging to syslog.
+2019-07-14T21:12:27.551855Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2019-07-14T21:12:27.556798Z mysqld_safe Directory '/var/run/mysqld' for UNIX socket file don't exists.
+```
+
+düzeltme için:
+
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo mkdir -p /var/run/mysqld
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo chown mysql:mysql /var/run/mysqld
+```
+
+sonra aynı adımdan devam:
+
+```
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo mysqld_safe --skip-grant-tables &
+[1] 31461
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ 2019-07-14T21:19:15.400184Z mysqld_safe Logging to syslog.
+2019-07-14T21:19:15.410578Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2019-07-14T21:19:15.534597Z mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+mysql -u root
+Welcome to the MySQL moni....
+
+mysql> use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> update user set authentication_string=PASSWORD("1") where User='root'; Query OK, 1 row affected, 1 warning (0.06 sec)
+Rows matched: 1  Changed: 1  Warnings: 1
+```
+
+Burada `UPDATE user SET plugin="mysql_native_password";` bunu da yapmak gerekiyor.
+
+> If you miss the third 'set plugin' statement, you'll successfully update your password but still won't be able to connect to your server. My system, for example, had the plugin value set to 'auth socket.' Even with the right login details, my server threw errors about my missing socket, and I needed to shut down, restart in safe mode, and switch both values again.
+
+> Finally, the 'flush privileges' command reloads the server's in-memory copy of the grant tables. Modifying the user table with UPDATE doesn't load the changes into the tables immediately, unlike the higher-level GRANT or SET commands.
+
+from [ACCESS DENIED: Reset MySQL root user password ](https://dev.to/oneearedmusic/access-denied-reset-mysql-root-user-password-2hk4) by  Erika Burdon
+
+Aslında buradaki konu:
+
+`UPDATE mysql.user SET plugin = 'mysql_native_password' WHERE user = 'root' AND plugin = 'unix_socket';
+FLUSH PRIVILEGES;`
+
+> System like Ubuntu prefers to use auth_socket plugin.
+> Instead you may want to back with the mysql_native_password, which will require user/password to authenticate.
+
+Ek olarak,
+
+`SHOW GRANTS FOR 'root'@'localhost';`'ı da kullan.
+
+yine ve yeniden son defa özet:
+
+> This is specific to Ubuntu 18.04 LTS and MySQL 5.x Followed this link Follow everything from here onwards:
+
+```
+sudo mysql_secure_installation
+sudo mysql
+```
+
+> Once logged into MySQL then from the MySQL prompt execute these commands:
+
+```
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+FLUSH PRIVILEGES;
+```
+
+> Now verify that the table has the password for the root
+
+`SELECT user,authentication_string,plugin,host FROM mysql.user;`
+
+> This solved my issue and now i am able to login.
+
+```
+mysql> flush privileges;
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> quit
+Bye
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo /etc/init.d/mysql stop
+[ ok ] Stopping mysql (via systemctl): mysql.service.
+taha@taha-Inspiron-3558:~/IdeaProjects/tumblrConsumer$ sudo /etc/init.d/mysql start
+[....] Starting mysql (via systemctl): mysql.serviceJob for mysql.service failed.
+See "systemctl status mysql.service" and "journalctl -xe" for details.
+ failed!
+```
+
+başlatamadı, hata var; bakalım:
+
+```
+taha@taha-Inspiron-3558:/var/log/mysql$ sudo tail -f /var/log/mysql/error.log
+2019-07-14T21:36:49.160614Z 0 [ERROR] InnoDB: Unable to lock ./ibdata1 error: 11
+2019-07-14T21:36:49.160649Z 0 [Note] InnoDB: Check that you do not already have another mysqld process using the same InnoDB data or log files.
+```
+
+> Run the following commands to kill mysql processes running on the server
+`sudo killall -u mysql`
+> or
+`sudo killall -9 mysql`
+> Note – Flags -u kills all the processes started by user mysql -9 flag kills all the mysql process running by all users across the server. For proper mysql processes cleanup you can run both commands without any harm. Start mysql server daemon
+`sudo service mysql start`
+
+Buralarda çok takıldım ama sonuç olarak şifreyi değiştirebilmişim. 
+Restart edince zaten startup'da mysql server service'i başlamış oluyor. 
+
+**Önemli olan:** `sudo mysql -u root -p` ile mysql shell'ine girmek.
+[ERROR 1698 (28000): Access denied for user 'root'@'localhost'](https://stackoverflow.com/questions/39281594/error-1698-28000-access-denied-for-user-rootlocalhost)
+
+### paths and directories and config file locations
+
+data directory:
+```
+mysql> select @@datadir
+    -> ;
++-----------------+
+| @@datadir       |
++-----------------+
+| /var/lib/mysql/ |
++-----------------+
+1 row in set (0.01 sec)
+```
+
+#### references:
+
+1. [How To Move a MySQL Data Directory to a New Location on Ubuntu 16.04](https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-16-04)
+> `mysql > select @@datadir;`
+> `sudo rsync -av /var/lib/mysql /mnt/volume-nyc1-01`
+> `sudo mv /var/lib/mysql /var/lib/mysql.bak`
+> `sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf` burada datadir tanımı değiştirilir: `datadir=/mnt/volume-nyc1-01/mysql` eklenir.
+```
+taha@taha-Inspiron-3558:~$ cat /etc/mysql/mysql.conf.d/mysqld.cnf 
+#
+# The MySQL database server configuration file.
+...
+[mysqld]
+#
+# * Basic Settings
+#
+user            = mysql
+pid-file        = /var/run/mysqld/mysqld.pid
+socket          = /var/run/mysqld/mysqld.sock
+port            = 3306
+basedir         = /usr
+datadir         = /var/lib/mysql
+tmpdir          = /tmp
+lc-messages-dir = /usr/share/mysql
+skip-external-locking
+...
+# Error log - should be very few entries.
+#
+log_error = /var/log/mysql/error.log
+...
+# Here you can see queries with especially long duration
+#slow_query_log         = 1
+#slow_query_log_file    = /var/log/mysql/mysql-slow.log
+#long_query_time = 2
+#log-queries-not-using-indexes
+```
+
+## managing database operations:
+
+### create, delete, access databases and tables
+```
+SHOW DATABASES;
+CREATE DATABASE database name;
+DROP DATABASE database name;
+USE events;
+SHOW tables; 
+```
+
+### creating listing changing table schema:
+
+CREATE TABLE potluck (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+name VARCHAR(20),
+food VARCHAR(30),
+confirmed CHAR(1), 
+signup_date DATE);
+
+DESCRIBE potluck;
+
+ALTER TABLE potluck ADD email VARCHAR(40) AFTER name;  
+ALTER TABLE potluck DROP email;
+
+### users and roles
+
+#### view users:
+`SELECT User, Host, authentication_string FROM mysql.user;`
+
+#### add db users:
+```
+INSERT INTO mysql.user (User,Host,authentication_string,ssl_cipher,x509_issuer,x509_subject)
+VALUES('demouser','localhost',PASSWORD('demopassword'),'','','');
+FLUSH PRIVILEGES;
+
+GRANT ALL PRIVILEGES ON demodb.* to demouser@localhost;
+FLUSH PRIVILEGES;
+
+SHOW GRANTS FOR 'demouser'@'localhost';
+```
+
+## Wrap-up/review/retro of the day ya da take aways/keys to take away
+
+1. > spring boot lombok tutorial
+2. > hibernate import.sql
+`data.sql` ve `schema.sql`
+
+## retro & backlog
+1. hibernate mysql generates ddl but dont update database
+> Sebebi hem ddl generation hem de ddl autocreation'unun aynı anda olması.
+>> spring data jpa hibernate mysql generates ddl but does not create tables on database
+2. using flyway and hibernate ddl create together
+3. spring data hibernate ddl schema creation after initializer seed commandlinerunner
+4. Why Spring Boot doesn't create schema for MySQL DB while using "spring.jpa.hibernate.ddl-auto=create"?
+> çözüm yukarıda anlattığım generation ve creation'u birlikte kullanmaktı ama buraya şunu da yazmışlar:
+`spring.datasource.url=jdbc:mysql://localhost:3309/course_api_db?createDatabaseIfNotExist=true`
+5. Table 'DBNAME.hibernate_sequence' doesn't exist
+> `spring.jpa.hibernate.use-new-id-generator-mappings`
+6. mysql create user with root privileges
+7. spring data jpa generate dll or flyway
+8. spring boot hibernate create database table schema from entities
+9. spring boot database migrations
+
+## further reading
+1. [Combine Hibernate's automatic schema creation and database versioning](https://stackoverflow.com/questions/18536256/combine-hibernates-automatic-schema-creation-and-database-versioning/18809483)
+> a solution for both development and production environments and a workflow
+2. [#HOWTO: Best Practices for Flyway and Hibernate with Spring Boot](https://rieckpil.de/howto-best-practices-for-flyway-and-hibernate-with-spring-boot/)
+> With the Flyway dependency on the classpath, Spring Boot will initialize everything for you. Once the first connection is established to the database, Flyway will create a flyway_schema_history table to track the already applied database scripts with their checksum. 
+> (For lazy developer) Let Hibernate create an initial version of the schema
+ddl generation'dan bahsediyor:
+>> Typing the SQL scripts for a bigger (already existing) JPA model might be laborious. Fortunately, JPA offers a feature for the schema-generation (for lazy developers). With JPA you can output the DDL scripts to a file and modify/adjust them if needed. For this I often create a specific Spring profile and connect to a local database:
+```
+spring:
+  profiles: generatesql
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+  flyway:
+    enabled: false
+  jpa:
+    properties:
+      javax: 
+        persistence:
+          schema-generation:
+            create-source: metadata
+            scripts:
+              action: create
+              create-target: src/main/resources/ddl_jpa_creation.sql
+```
+3. [database initialization](https://docs.spring.io/spring-boot/docs/current/reference/html/howto-database-initialization.html)
+> Initialize a Database Using JPA
+> Initialize a Database Using Hibernate
+> Initialize a Database
+>> Spring Boot can automatically create the schema (DDL scripts) of your DataSource and initialize it (DML scripts). It loads SQL from the standard root classpath locations: schema.sql and data.sql, respectively. In addition, Spring Boot processes the schema-${platform}.sql and data-${platform}.sql files (if present), where platform is the value of spring.datasource.platform. This allows you to switch to database-specific scripts if necessary. For example, you might choose to set it to the vendor name of the database (hsqldb, h2, oracle, mysql, postgresql, and so on).
+4. [Spring Boot insert sample data into database upon startup](https://stackoverflow.com/questions/44749286/spring-boot-insert-sample-data-into-database-upon-startup/44754394)
+5. [Spring Boot - Loading Initial Data](https://stackoverflow.com/questions/38040572/spring-boot-loading-initial-data)
+6. [Spring Boot Reference Documentation](https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#getting-started-installing-the-cli)
+7. [Should you create or generate your table model?](https://thoughts-on-java.org/create-generate-table-model/) By Thorben Janssen
+8. [Standardized schema generation and data loading with JPA 2.1](https://thoughts-on-java.org/standardized-schema-generation-data-loading-jpa-2-1/) By Thorben Janssen
+9. [Spring Boot Database Migrations with Flyway](https://www.callicoder.com/spring-boot-flyway-database-migration-example/)
+10. [Introduction to JPA Using Spring Boot Data](https://dzone.com/articles/introduction-to-jpa-using-spring-boot-data-jpa)
+
+# Gün4:
+
+Bugüne geçmeden, github'da teams altında değil, doğrudan kendi hesabımın altında `Projects > New Project > Private olarak Automated Kanban Board'lı bir proje oluşturdum`
+Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta olduklarımı ve kalan tüm yapılacak PBI'ları ekledim. 
+1. 12 tane yapılan
+2. 15 tane yapılacak (*)bu belli bir fonksiyonelite için gerekli olduğundan bu kadar fazla. Yani bir günde yapılmasa da tamamı yapıldığında bir milestone olacak. 
+3. 33 tane (*) Bazısı Epic ya da Feature şeklinde çok genel.    
+
+## Devam et buradan.
 
 # References/Further reading/readings/materials
