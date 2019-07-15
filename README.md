@@ -1251,6 +1251,7 @@ Ancak RAD için hibernate database initialization/database schema autocreation i
 
 bugün yaşağıdığım sorunlar ddl autocreation, migrations ve ddl generation'ları birlikte kullanmak ile de ilgiliydi:
 1. sadece birini bir anda yapmak gerekir. ddl autocreation yapılacaksa:
+
 ```
 spring.jpa.open-in-view=false
 spring.jpa.database-platform=org.hibernate.dialect.MySQL5InnoDBDialect
@@ -1262,6 +1263,7 @@ spring.jpa.hibernate.naming_strategy=org.hibernate.cfg.ImprovedNamingStrategy
 #spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 #spring.jpa.hibernate.use-new-id-generator-mappings=false
 ```
+
 sadece bu olmalı. 
 
 ```
