@@ -1933,6 +1933,32 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 2. 15 tane yapılacak (*)bu belli bir fonksiyonelite için gerekli olduğundan bu kadar fazla. Yani bir günde yapılmasa da tamamı yapıldığında bir milestone olacak. 
 3. 33 tane (*) Bazısı Epic ya da Feature şeklinde çok genel.    
 
-## Devam et buradan.
+## backlog
+
+1. react bootstrap card layout
+2. integrating bootstrap with react
+3. using react-bootstrap
+4. using third party libraries in react
+5. why do we need react router
+
+## References
+
+1. [react-bootstrap library - cards component](https://react-bootstrap.github.io/components/cards/)
+2. [using third-party libraries from react](https://www.sitepoint.com/integrating-bootstrap-with-react/)
+3. [adding bootstrap](https://facebook.github.io/create-react-app/docs/adding-bootstrap)
+4. [Import Bootstrap As a Dependency](https://blog.logrocket.com/how-to-use-bootstrap-with-react-a354715d1121/)
+5. [How do I use/include third party libraries in react?](https://stackoverflow.com/questions/45658200/how-do-i-use-include-third-party-libraries-in-react)
+6. [Why I don't use React-Router](https://asleepysamurai.com/articles/why-i-dont-use-react-router)
+7. [Learning Redux Without Using Redux](https://asleepysamurai.com/articles/learning-redux-without-using-redux)
+
+## follow
+
+1. [bg dam - asleepysamurai](https://asleepysamurai.com/) mainly on `#react`
+
+# tools
+
+## devops platform(ci/cd pipeline, private code repositories, project/agile management board)
+1. [GitLab](https://about.gitlab.com/free-trial/)
+2. [Azure Devops](https://azure.microsoft.com/tr-tr/services/devops/)
 
 # References/Further reading/readings/materials
