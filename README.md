@@ -1950,6 +1950,8 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 5. [How do I use/include third party libraries in react?](https://stackoverflow.com/questions/45658200/how-do-i-use-include-third-party-libraries-in-react)
 6. [Why I don't use React-Router](https://asleepysamurai.com/articles/why-i-dont-use-react-router)
 7. [Learning Redux Without Using Redux](https://asleepysamurai.com/articles/learning-redux-without-using-redux)
+8. [The What, Why and How of React (Routers)](https://dev.to/mangel0111/the-what-why-and-how-of-react-routers-41b)
+9. [You might not need React Router](https://www.freecodecamp.org/news/you-might-not-need-react-router-38673620f3d/)
 
 ## follow
 
@@ -1960,5 +1962,15 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 ## devops platform(ci/cd pipeline, private code repositories, project/agile management board)
 1. [GitLab](https://about.gitlab.com/free-trial/)
 2. [Azure Devops](https://azure.microsoft.com/tr-tr/services/devops/)
+
+# TODOs
+1. Private repo: İleriki aşamalarda private repo'ya geçilecek. `Github` unlimited free repo sunuyor. Settings'ten private'a döndürebiliyoruz. 
+Ayrıca,
+> private code repository hosting
+[6 places to host your git repository](https://opensource.com/article/18/8/github-alternatives)
+2. Licensing: how to add a licence file to github
+> [What you need to know to choose an open source license.](https://gist.github.com/nicolasdao/a7adda51f2f185e8d2700e1573d8a633)
+3. Branching strategy and issue tracking
+
 
 # References/Further reading/readings/materials
