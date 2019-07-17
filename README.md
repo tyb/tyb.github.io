@@ -1940,6 +1940,7 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 3. using react-bootstrap
 4. using third party libraries in react
 5. why do we need react router
+6. spring boot react websocket
 
 ## References
 
@@ -1952,6 +1953,9 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 7. [Learning Redux Without Using Redux](https://asleepysamurai.com/articles/learning-redux-without-using-redux)
 8. [The What, Why and How of React (Routers)](https://dev.to/mangel0111/the-what-why-and-how-of-react-routers-41b)
 9. [You might not need React Router](https://www.freecodecamp.org/news/you-might-not-need-react-router-38673620f3d/)
+10. [Full Stack Reactive with Spring WebFlux, WebSockets, and React](https://developer.okta.com/blog/2018/09/25/spring-webflux-websockets-react)
+11. [stomp-spring-react](https://github.com/akarasev/stomp-spring-react/blob/develop/src/App.js)
+12. [Sample about Websocket using React and Spring Boot Oauth2 to send a notification between user.](https://github.com/zcmgyu/websocket-spring-react)
 
 ## follow
 
