@@ -1956,6 +1956,7 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 10. [Full Stack Reactive with Spring WebFlux, WebSockets, and React](https://developer.okta.com/blog/2018/09/25/spring-webflux-websockets-react)
 11. [stomp-spring-react](https://github.com/akarasev/stomp-spring-react/blob/develop/src/App.js)
 12. [Sample about Websocket using React and Spring Boot Oauth2 to send a notification between user.](https://github.com/zcmgyu/websocket-spring-react)
+13. [Using Custom React Hooks to Simplify Forms](https://upmostly.com/tutorials/using-custom-react-hooks-simplify-forms)
 
 ## follow
 
@@ -1978,3 +1979,15 @@ Ayrıca,
 
 
 # References/Further reading/readings/materials
+1. [Make Your Own Rich Text Editor in Reactjs using draftjs](https://hackernoon.com/make-your-own-rich-text-editor-in-reactjs-using-draftjs-25a0b4fb05e5)
+2. [page source undaki javascript library lerine bak.](https://ncase.me/trust/)
+3. [implement a radio application in react - Build your own radio streaming app with Howler.js](https://medium.com/crowdbotics/build-your-own-radio-streaming-app-with-howler-js-637f929decc0)
+4. implement a youtube playlist in react ya da [React Native YouTube Replica](https://medium.com/react-native-training/react-native-youtube-replica-f378200d91f0)
+5. [Create a React Native app on any OS with no build config. ](https://github.com/react-community/create-react-native-app)
+6. [Building an Autocomplete Component in React](https://alligator.io/react/react-autocomplete/)
+7. [How To Write a Search Component with Suggestions in React](https://dev.to/sage911/how-to-write-a-search-component-with-suggestions-in-react-d20)
+8. [Build an Autocomplete widget with React and Elastic Search](https://blog.bitsrc.io/how-to-build-an-autocomplete-widget-with-react-and-elastic-search-dd4f846f784)
+9. [react pdf viewer](https://react-pdf.org/styling)
+10. react drawing or sketching app
+11. react diagramming library: [Project Storm React Diagrams - A simple diagramming library written in react](https://projectstorm.gitbooks.io/react-diagrams/)
+
