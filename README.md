@@ -660,7 +660,7 @@ Bunu kurarken `gdm3` ya da `sddm` GUI manager'larından birini seçtiriyor.
 > Bu aslında Gün3'te yapacağım konu.
 
 ## Further readings:
-- [What is the rationale for the `/usr` directory?](https://askubuntu.com/questions/130186/what-is-the-rationale-for-the-usr-directory)
+1. [What is the rationale for the `/usr` directory?](https://askubuntu.com/questions/130186/what-is-the-rationale-for-the-usr-directory)
 > Short version:
 > As your link already said, /usr is a place for system-wide, read-only files. So all your installed software goes there. It does not duplicate any names of / except /bin and /lib, but, originally, with a different purpose: /bin, /lib is only for binaries and libraries required for booting, while /usr/bin, /usr/lib is for all the other executables and libraries. (now be a good boy and don't ask about /sbin, this is the Short Version after all)
 > Nowadays, the distinction between "required for booting" and not has diminished, since most modern distros, including Ubuntu, cannot properly boot without several files from /usr. And that's why there is a strong movement towards merging /usr/bin and /bin, so probably in the near future (Ubuntu 12.10 perhaps?) /bin will be a symlink to /usr/bin.
@@ -1931,7 +1931,281 @@ Bugüne geçmeden, github'da teams altında değil, doğrudan kendi hesabımın 
 Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta olduklarımı ve kalan tüm yapılacak PBI'ları ekledim. 
 1. 12 tane yapılan
 2. 15 tane yapılacak (*)bu belli bir fonksiyonelite için gerekli olduğundan bu kadar fazla. Yani bir günde yapılmasa da tamamı yapıldığında bir milestone olacak. 
-3. 33 tane (*) Bazısı Epic ya da Feature şeklinde çok genel.    
+3. 33 tane (*) Bazısı Epic ya da Feature şeklinde çok genel.   
+
+## spring boot profiles to manage environments
+
+> Spring Profiles helps segregating your application configurations, and make them available only in certain environments. ﻿
+> An application run on many different environments. For example, Dev, QA, Test, Stage, Production etc. 
+> Therefore, an application may need different configurations on different environments.. 
+> In other words, configurations like databases, messaging systems, server ports, security will be different from environment to environment.
+
+### how to set and use different profiles in spring boot
+
+>  There are multiple ways to set profiles for your springboot application.
+
+1. Enabling active profile in application.yml
+`spring.profiles.active=dev`
+
+2. Programmatic way:
+`SpringApplication.setAdditionalProfiles("dev");`
+
+ya da 
+
+```java
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+    new SpringApplicationBuilder()
+            .sources(Application.class)
+            .profiles("prod")
+            .run(args);
+    }
+}
+```
+3. Tests make it very easy to specify what profiles are active
+`@ActiveProfiles("dev")`
+
+4. In a Unix environment
+`export spring_profiles_active=dev`
+
+5. JVM System Parameter from Run configurations
+`-Dspring.profiles.active=dev`
+    
+6. By specifying in command line while running .jar file.
+`java -jar file.jar --spring.profiles.active=production`
+
+
+### @Profile on @Bean methods
+> Spring Profiles are not limited to deployment environments. In other words, It can be used to bring any variation in application profile. 
+
+```java
+        @Bean
+        @Profile("oracle")
+        public DataSource oracleDataSource(){
+            DataSource dataSource;
+            // implementation skipped
+            return dataSource;
+        }
+        @Bean
+        @Profile("mysql")
+        public DataSource mySqlDataSource(){
+            DataSource dataSource;
+            // implementation skipped
+            return dataSource;
+        }
+```
+from [How to use Spring Profiles – Tutorial with Examples](https://www.amitph.com/how-to-use-spring-profiles/)
+
+or more generic/enterprise:
+
+```java
+Config.class
+
+public interface Config {
+   setup();   
+}
+
+@Profile("dev")
+@Component
+public class DevConfig implements Config {
+
+    @Override
+    public void setup() {
+        //setup some configuration here
+        System.out.println("Development configuration setup");
+    }
+}
+
+@Profile("prod")
+@Component
+public class ProdConfig implements Config {
+
+    @Override
+    public void setup() {
+        //setup some configuration here
+        System.out.println("Production configuration setup");
+    }
+}
+
+
+@SpringBootApplication
+public class Application {
+
+    private Config config;
+
+    @Autowired
+    Application(Config config) {
+        this.config = config;
+    }
+
+    public static void main(String[] args) {
+        new SpringApplicationBuilder()
+                .sources(Application.class)
+                .profiles("prod")
+                .run(args);
+    }
+
+    @Bean
+    CommandLineRunner execute() {
+        return args -> config.setup();
+    }
+}
+```
+
+or 
+
+```java
+@Autowired
+private Environment environment;void environmentSpecificMethod() {
+    if (environment.acceptsProfiles("prod")) {
+        System.out.println("This will be executed only in production mode");
+        //do some stuff here
+    } else {
+        System.out.println("This will be executed for all other profiles");
+    }
+}
+```
+
+from [Spring Boot Profiles](https://medium.com/@ihorsokolyk/spring-boot-profiles-9349291f6e7b)
+
+## spring boot security 
+
+### disable security - how to exclude default security autoconfiguration
+
+dependency olarak spring security'i eklediğimizde biz herhangi bir şey konfigüre etmesek de default olarak basic security kısmı eklenir. 
+test amaçlı olarak curl, postman ya da herhangi bir test sınıfından mevcut rest api'mizi test etmek istediğimizde not authorized hatası alırız bu durumda:
+
+```
+taha@taha-Inspiron-3558:~$ curl -v http://localhost:8080/tumblr/posts
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to localhost (127.0.0.1) port 8080 (#0)
+> GET /tumblr/posts HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/7.61.0
+> Accept: */*
+> 
+< HTTP/1.1 401 
+< Set-Cookie: JSESSIONID=B3A261EBA30152C4BB412CE4A6F5B7F3; Path=/; HttpOnly
+< WWW-Authenticate: Basic realm="Realm"
+< X-Content-Type-Options: nosniff
+< X-XSS-Protection: 1; mode=block
+< Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+< Pragma: no-cache
+< Expires: 0
+< X-Frame-Options: DENY
+< Content-Type: application/json;charset=UTF-8
+< Transfer-Encoding: chunked
+< Date: Sat, 20 Jul 2019 21:27:23 GMT
+<                                                                                                                                     
+* Connection #0 to host localhost left intact                                                                                         
+{"timestamp":"2019-07-20T21:27:23.937+0000","status":401,"error":"Unauthorized","message":"Unauthorized","path":"/tumblr/posts"}
+
+taha@taha-Inspiron-3558:~$ curl -v http://localhost:8080/tumblr/posts                                                                       
+*   Trying 127.0.0.1...                                                                                                               
+* TCP_NODELAY set
+* Connected to localhost (127.0.0.1) port 8080 (#0)
+> GET /tumblr/posts HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/7.61.0
+> Accept: */*
+> 
+< HTTP/1.1 200 
+< Content-Length: 0
+< Date: Sat, 20 Jul 2019 21:59:14 GMT
+```
+
+### Spring boot getting 401 unauthorized status code for simple get request
+
+> You need to configure Spring Security, by default all routes all secured for authrorization
+
+#### references:
+
+1. [How to secure REST API with Spring Boot and Spring Security?](https://stackoverflow.com/questions/32548372/how-to-secure-rest-api-with-spring-boot-and-spring-security)
+
+```java
+@Configuration
+public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http.requestMatchers().antMatchers("/users/all").permitAll();
+    }
+}
+```
+
+> To discard the security auto-configuration and add our own configuration, we need to exclude the SecurityAutoConfiguration class.
+
+```java
+@SpringBootApplication(exclude = { SecurityAutoConfiguration.class })
+public class SpringBootSecurityApplication {
+ 
+    public static void main(String[] args) {
+        SpringApplication.run(SpringBootSecurityApplication.class, args);
+    }
+}
+```
+
+> Or by adding some configuration into the application.properties file:
+	
+`spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration`
+
+## Test a REST API with curl
+
+```
+curl -v http://www.example.com/
+curl -v http://localhost:8082/spring-rest/foos/9
+curl -d 'id=9&name=xxx' http://localhost:8082/spring-rest/foos/new
+```
+
+> if the endpoint expects json send request body as json and set header 
+
+`curl -d '{"id":9,"name":"xxx"}' -H 'Content-Type: application/json' http://localhost:8082/spring-rest/foos/new`
+
+> PUT, DELETE 
+```
+curl -d @request.json -H 'Content-Type: application/json' -X PUT http://localhost:8082/spring-rest/foos/9
+curl -X DELETE http://localhost:8082/spring-rest/foos/9
+```
+
+> custom headers:
+
+`curl -d @request.json -H "Content-Type: application/json" 
+  -H "Accept: application/json" http://localhost:8082/spring-rest/foos/new`
+  
+> authentication
+>> authentication with curl spring boot rest 
+
+## spring boot properties 
+
+1. spring boot propertysource and value
+
+## spring boot maven multi module project
+
+## spring externalizing secrets
+
+## Where is the Tumblr API Key? / Tumblr API 2: Where is the “OAUTH_TOKEN” and “OAUTH_TOKEN_SECRET”
+
+> You can get the consumer_key and consumer_secret after registering a new app at Tumblr [here](https://www.tumblr.com/oauth/apps) (it is called OAuth Consumer Key and there is a link below to get the Secret key of the app).
+> The token and token_secret keys are generated after allowing access of an app to a Tumblr account. They will be returned as parameters after returning to the callback script.
+
+### detailed explanation:
+
+> Probably this is old thread and you might have figured out how to work with it, Although I am trying to post the entire process for some newbies here, As it took a while for me to understand the entire process and work flow.
+> I have worked a lot with OAuth v2 and Tumblr API.
+1. > First and foremost we need to get registered to tumblr and once its done you get CONSUMER KEY and SECRET. These are the initial set of keys for further process.
+2. > After you have registerd and trying to communicate to the provider, we need request for REQUEST TOKEN and SECRET. This is one time access and it has nonce time attached to them. You can get that here (https://api.tumblr.com/console/calls/user/info).
+3. > Once you have REQUEST TOKEN AND SECRET. At this point you have registered your application and granted requested access to provider. Now you need to authorize yourself with the provider using /authorize url. At this point you get back OAUTH TOKEN and OAUTH VERFIER.
+4. > Once you have above tokens last step of this process is to fetch ACCESS TOKEN ANS TOKEN SECRET by apssing OAUTH TOKEN and CONSUMER KEY using /access/ url. After this step is succesfull you have ACCESS TOKEN.
+5. > Now store your CONSUMER KEY AND SECRET from first step and ACCESS TOKEN AND TOKEN SECRET from 4th step somewhere safe and use these keys in future for any communication to the provider.
+> NOTE: 1. Its generally assumed that access token expire but in reality they don't expire. They will expire only if user revokes the access. 2. After you have your token you can change your login credentials of Tumblr any number of times, this WILL NOT EFFECT the keys fetched.
+> I hope this is helpful for someone looking for the process and myths and questions regarding the process.
+
+## elaborate rest api
+
+
 
 ## backlog
 
@@ -1941,6 +2215,24 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 4. using third party libraries in react
 5. why do we need react router
 6. spring boot react websocket
+7. spring boot profiles
+8. spring boot rest simple authentication to test with curl
+9. spring boot cannot resolve permitall
+10. spring boot rest bypass security permitting all users all paths for test purposes
+11. java maven idea class resolve but some methods does not resolve site:stackoverflow.com
+Burada öyle bir hata yaptım ki... Normalde çokça defa idea class ya da metotları cannot resolve diye kırmızı gösterirdi.
+Bunun için `invalidate caches` derdik ya da `.idea` dosyasını silerdik. Beni bu yanılttı ve hızlıca yapmaya çalışırken bir şeye dikkat edemedim.
+Yaptığım şey şuydu, hızlıca bir sınıf oluşturup içerisine third party library'deki bir metot çağrısını ekledim. Sınıfı görüyordu ama metodu görmüyordu. 
+Hatta sonrasında `System.out.println` vardı ve `System.out`u görürken `println`i görmüyordu.
+Program derlenmiyordu, aslında buradan uyanmaya çalıştım çünkü idea'dan kaynaklanan durum olsa kırmızı görünür ama derlenirdi. 
+Burada hiç derlenmiyordu çünkü metot çağrısını doğrudan sınıfın içine(constructor ya da metot içine değil) yazmış olmamdı :)
+12. using jumblr
+13. tumblr api consumer
+
+JDK 11 den kaynaklandığını düşünüp JDK 8'i kurup konfigüre etmiştim hatta.
+
+> Checking JAVA_HOME on Linux
+`$JAVA_HOME/bin/javac -version`
 
 ## References
 
@@ -1957,10 +2249,14 @@ Olabildiğince `finer-grained` PBI'lar olarak yaptıklarımı ve yapmakta oldukl
 11. [stomp-spring-react](https://github.com/akarasev/stomp-spring-react/blob/develop/src/App.js)
 12. [Sample about Websocket using React and Spring Boot Oauth2 to send a notification between user.](https://github.com/zcmgyu/websocket-spring-react)
 13. [Using Custom React Hooks to Simplify Forms](https://upmostly.com/tutorials/using-custom-react-hooks-simplify-forms)
+14. [The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749
+15. [Where is the Tumblr API Key?]()
 
 ## follow
 
 1. [bg dam - asleepysamurai](https://asleepysamurai.com/) mainly on `#react`
+
+
 
 # tools
 
@@ -1990,4 +2286,15 @@ Ayrıca,
 9. [react pdf viewer](https://react-pdf.org/styling)
 10. react drawing or sketching app
 11. react diagramming library: [Project Storm React Diagrams - A simple diagramming library written in react](https://projectstorm.gitbooks.io/react-diagrams/)
+12. [Install OpenJDK 8 on Ubuntu Trusty](https://www.geofis.org/en/install/install-on-linux/install-openjdk-8-on-ubuntu-trusty/)
+```
+sudo add-apt-repository ppa:openjdk-r/ppa
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+sudo update-java-alternatives --list
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+```
 
+# backlog
+1. ubuntu 18.10 experienced an internal problem plymouth
