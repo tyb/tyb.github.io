@@ -2182,6 +2182,16 @@ curl -X DELETE http://localhost:8082/spring-rest/foos/9
 
 1. spring boot propertysource and value
 
+### inheriting properties
+
+[Spring Boot Inherit application.properties from dependency](https://stackoverflow.com/questions/35663679/spring-boot-inherit-application-properties-from-dependency)
+
+> One possible solution is to
+1. > apply a custom profile to the dependency
+2. > include inheritable settings in the application-customprofile.properties
+3. > have the dependent(s) set spring.profiles.include=customprofile in application[-{profile}].properties (note: if set in application.properties, it applies for all profiles)
+
+
 ## spring boot maven multi module project
 
 ## spring externalizing secrets
@@ -2205,7 +2215,78 @@ curl -X DELETE http://localhost:8082/spring-rest/foos/9
 
 ## elaborate rest api
 
+```
+@Controller
+// To elaborate api to manage from security or request routing or api maintenance perspectives.
+@RequestMapping("/api")
+public class TumblerConsumerController {
+    @Autowired
+    private Consumer tumblrConsumer;
 
+    @RequestMapping(method = RequestMethod.GET, value="/tumblr/posts")
+    @ResponseBody
+    public void getPosts()   {
+        tumblrConsumer.consume();
+    }
+}
+```
+
+## consuming rest api with gson / spring boot json response processing
+
+### references
+1. [Invoking RESTful Web Service using API in java.net and GSON](https://javabeat.net/invoking-restful-web-service-using-api-in-java-net-and-gson/)
+2. spring boot gson generic type
+    1. [GSON - Serializing and Deserializing Generic Types ](https://www.javaguides.net/2018/10/gson-serializing-and-deserializing-generic-types.html)
+    2. [Gson: Deserialization of Generic Types](https://dzone.com/articles/deserialization-1)
+3. Consuming a RESTful Web Service in spring boot
+
+## configuring hibernate relationships between entities
+
+spring boot hibernate entity relationships
+
+1. [What is the difference between Unidirectional and Bidirectional JPA and Hibernate associations?](https://stackoverflow.com/questions/5360795/what-is-the-difference-between-unidirectional-and-bidirectional-jpa-and-hibernat)
+>This is a Unidirectional association
+```java
+public class User {
+    private int     id;
+    private String  name;
+    @ManyToOne
+    @JoinColumn(
+            name = "groupId")
+    private Group   group;
+}
+
+public class Group {
+    private int     id;
+    private String  name;
+}
+```
+
+> The Bidirectional association
+
+```java
+public class User {
+    private int     id;
+    private String  name;
+    @ManyToOne
+    @JoinColumn(
+            name = "groupId")
+    private Group   group;
+}
+public class Group {
+    private int         id;
+    private String      name;
+    @OneToMany(mappedBy="group")
+    private List<User>  users;
+}
+```
+2. [JPA and Hibernate Many To Many Relationship Mapping Example with Spring Boot and MySQL](https://hellokoding.com/jpa-many-to-many-relationship-mapping-example-with-spring-boot-maven-and-mysql/)
+3. [JPA / Hibernate One to Many Mapping Example with Spring Boot](https://www.callicoder.com/hibernate-spring-boot-jpa-one-to-many-mapping-example/)
+
+
+### configuring enum types in entities
+
+[The best way to map an Enum Type with JPA and Hibernate](https://vladmihalcea.com/the-best-way-to-map-an-enum-type-with-jpa-and-hibernate/)
 
 ## backlog
 
@@ -2228,6 +2309,12 @@ Program derlenmiyordu, aslında buradan uyanmaya çalıştım çünkü idea'dan 
 Burada hiç derlenmiyordu çünkü metot çağrısını doğrudan sınıfın içine(constructor ya da metot içine değil) yazmış olmamdı :)
 12. using jumblr
 13. tumblr api consumer
+14. tumblr api jumblr textpost
+> title ve body yani en önemli kısmı dönmüyor jumblr wrapper'ı. 
+Post Pojo'su var ve bundan türüyen TextPost pojo'su var bu title ve body içeriyor ama getPosts yaparken dönen değer Post'a alınmış. 
+TextPost'u almak için değil de api'yi kullanarak paylaşım yapmak için düşünmüşler.
+raw olarak kendim api'yi consume edeceğim. 
+15. when declaring relationships in hibernate how must we do bidirectional or one directional
 
 JDK 11 den kaynaklandığını düşünüp JDK 8'i kurup konfigüre etmiştim hatta.
 
