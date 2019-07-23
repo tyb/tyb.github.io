@@ -2343,6 +2343,180 @@ JDK 11 den kaynaklandığını düşünüp JDK 8'i kurup konfigüre etmiştim ha
 
 1. [bg dam - asleepysamurai](https://asleepysamurai.com/) mainly on `#react`
 
+# Gün5
+
+## serializing/marshalling when creating json from object to send to client in a rest api(mainly on request processing) 
+## deserializing/unmarshalling when creating object from json to persist data(mainly on response processing)
+
+## .net core api development on ubuntu
+
+## design decisions on the usage of Post superclass from Jumblr
+### downcasting Post to TextPost.
+1. [Does the visitor pattern violate the Liskov Substitution Principle](https://softwareengineering.stackexchange.com/questions/312276/does-the-visitor-pattern-violate-the-liskov-substitution-principle)
+2. How to avoid (downcasting) and instanceof? 
+3. instanceof Operator and Visitor Pattern Replacement in Java 8
+4. Avoiding instanceof vs abstract God Class. Do I have an alternative?
+5. how to access subclass extended state
+6. visitor to get subclass without downcasting or instanceof
+7. which design pattern to use get subclass without downcasting or instanceof
+8. how to assign extended subtype data class to super type in inheritance hierarchy
+9. PAPER - DiggingintotheVisitorPattern
+10. Proxy, Decorator, Adapter and Bridge Patterns
+11. The Visitor Pattern Re-visited 
+12. Tips on how to balance Polymorphism/Inheritance/TypeData architecture with Prototype/Flyweight pattern in a complex card game?
+13. Java Polymorphism - Selecting correct method based on subtype
+14. Visitor Pattern or polymorphism?
+15. Be not afraid of the Visitor, the big, bad Composite, or their little friend Double Dispatch - Posted by Jeremy Miller on October 31, 2007
+16. When should I use the Visitor Design Pattern? [closed] #important
+17. visitor design pattern to handle polymorphism in inheritance hierarchy extended data classes
+    - visitor design pattern to manage extension inheritance data classes
+    - visitor to manage extension inheritance pojo data classes
+    - why i cannot assign pojo subtype to parent
+18. Accessing subclass members through super class reference variables
+
+Belki de en doğrusu amaca yönelik olarak en straightforward yolu uygulamaktı. Bu da `instanceof` kontrolüydü:
+```java
+List<Post> posts =  blog.draftPosts();
+Post post = posts.get(0);
+if(post instanceof TextPost) {
+    System.out.println("textPost: " + ((TextPost) post).getTitle());
+    System.out.println("textPost: " + ((TextPost) post).getBody());
+    ...
+}
+```
+Ek olarak reflection ile deneyebilirdik bu işlemi ya da stream functionalları ile instanceof kontrolünü kolaylaştırabilirdik.
+Bazıları doğrusunun zaten instanceof kontrolü olduğunu söylüyor. Çünkü sınırlı sayıda sınıfın var zaten diyorlar.
+
+Jumblr şöyleydi:
+```java
+public class Post extends Resource {
+    public enum PostType {
+        TEXT("text"),
+        PHOTO("photo"),
+        QUOTE("quote"),
+        LINK("link"),
+        CHAT("chat"),
+        AUDIO("audio"),
+        VIDEO("video"),
+        ANSWER("answer"),
+        POSTCARD("postcard"),
+        UNKNOWN("unknown");
+
+        private final String mType;
+
+        PostType(final String type) {
+            this.mType = type;
+        }
+
+        public String getValue() {
+            return this.mType;
+        }
+    }
+
+    protected PostType type;
+    private Long id;
+    private String author;
+    private String reblog_key;
+    private String blog_name;
+    //...
+}
+```
+
+ve
+
+```java
+public class TextPost extends SafePost {
+
+    private String title;
+    private String body;
+
+    public String getTitle() {
+        return title;
+    }
+    //...
+}
+
+public class QuotePost extends SafePost {
+
+    private String text;
+    private String source;
+    
+    public String getText() {
+        return text;
+    }
+    //...
+}
+
+class SafePost extends Post {
+    
+    @Override
+    public void save() {
+        try {
+            super.save();
+        } catch (IOException ex) {
+            // No files involved, no IOException
+        }
+    }
+
+}
+```
+
+deserialize ederken:
+
+```java
+public class PostDeserializer implements JsonDeserializer<Object> {
+
+    @Override
+    public Object deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
+        
+        //Taha: Reflection kullanımına dikkat.
+        JsonObject jobject = je.getAsJsonObject();
+        String typeName = jobject.get("type").getAsString();
+        String className = typeName.substring(0, 1).toUpperCase() + typeName.substring(1) + "Post";
+        try {
+            Class<?> clz = Class.forName("com.tumblr.jumblr.types." + className);
+            return jdc.deserialize(je, clz);
+        } catch (ClassNotFoundException e) {
+            System.out.println("deserialized post for unknown type: " + typeName);
+            return jdc.deserialize(je, UnknownTypePost.class);
+        }
+    }
+}
+```
+
+ResponseWrapper.java:
+
+```java
+private Gson gsonParser() {
+    return new GsonBuilder().
+        registerTypeAdapter(Post.class, new PostDeserializer()).
+        create();
+}
+```
+
+olduğundan ve yine ResponseWrapper'da:
+
+```java
+// NOTE: needs to be duplicated logic due to Java erasure of generic types
+public List<Post> getPosts() {
+        Gson gson = gsonParser();
+        JsonObject object = (JsonObject) response;
+        List<Post> l = gson.fromJson(object.get("posts"), new TypeToken<List<Post>>() {}.getType());
+        for (Post e : l) { e.setClient(client); }
+        return l;
+    }
+```
+
+Burada, alınan JSON datasında posts json objesi bir List<Post> tur diyoruz ve bunu alıyoruz. posts'un altındaki her bir post, `registerTypeAdapter` ile ilişkilendirildiğinden
+ve alt tiplere göre ilişkilendirildiğinden response'daki type'a göre uygun alt tipe alınmış olacak ve alt tipi de Post supertype'ında saklayacağız. 
+
+Ayrıca yukarıda yorumda belirtildiği type erasure konusundan kurtulmak için bir çözümüm var, onu uygula.
+
+
+## OAuth processing
+[ScribeJava, the simple OAuth client Java lib!](https://github.com/scribejava/scribejava)
+
+
 
 
 # tools
