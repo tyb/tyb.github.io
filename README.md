@@ -18,11 +18,14 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
 
         - `$ ls -lh /usr/lib/jvm/`,
         - `whereis javac`,
-        - `find`,
+        - `find . -iname '*{part_of_word}*' -print`,
         - `locate`,
         - `which`
+        - `grep -R hello /home`
 
         linux command'larının pratik kullanımlarına bakılacak.
+        
+        
 
         **TODO:** bunları Gist olarak ekle.
 
@@ -109,7 +112,7 @@ Ancak vazgeçtim IDEA Community Edition ile devam ettim. Burada bazı Linux comm
 
 
 3. Git kurulumu ve remote/local workflow'u
-    - /usr/bin/git de bulunuyor, IDE otomatik olarak buradan görüy  or.
+    - /usr/bin/git de bulunuyor, IDE otomatik olarak buradan görüyor.
     - Remote'dan clone edip local'ime indirdiğim bir proje için ilgili folder'da .git folder'ı oluştu.
 
     **içeriği:**
@@ -2516,7 +2519,319 @@ Ayrıca yukarıda yorumda belirtildiği type erasure konusundan kurtulmak için 
 ## OAuth processing
 [ScribeJava, the simple OAuth client Java lib!](https://github.com/scribejava/scribejava)
 
+# Gün6:
 
+## yapılanlar
+1. worked on jsoup: like a web crawler, after get a page and parsed it get links and fetch those links' pages:
+ekşisözlükteki gündem alınarak her bir gündem maddesi için oradaki entryleri fav sayısına göre sıralayarak bir map'te tuttum. Bu desc sıralayıp en populer 10 entry'yi göstermek için kullanılabilir. Ayrıca tumblr'daki etiketleri indirip LDA vs. ya da lucene indexing ile oluştuurlmuş etiketlere göre sadece ilgi alanıma girenlerden belli popülerleri ya da tamamını göster diyebilirim.
+    1.1 Pagination eksik. 
+    1.2 AJAX ile işlem yapan ya da javascript ile JSON getiren sayfaların parse edilmesi noktasında Selenium WebDriver ya da diğer tool'lara bakılacak. 
+    1.3 jsoup ile POST da yapılabiliyor ya da header parametreleri de gönderilebiliyor, bunlara bak.
+    1.4 en uç senaryoda web sayfası HttpClient ile bir şekilde alındıktan sonra sadece html'i parse etmek için kullanılabilir.
+    1.5 benim tumblr ya da diğer içeriklerim html olacağından bunları hem rich text editor'de göstermek üzere html üzere saklarken hem de bazı durumlarda bununla html'i parse edebiliriz.
+
+2. pretty print senaryolarını tam uygulayamadım, ama reflection ile field'lara ulaşıp yazdırdım.
+
+3. Gson ya da Jackson farketmez, Circular reference içeren bir obje ile işlem yaptığımmızda Stackoverflowerror alıyoruz. 
+
+4. array, list, set, map işlemlerinde java 8 lambda, functional ve stream API'yi kullandım. daha birçok olası senaryoda extensively kullanılacak. 
+
+## development workflow için.
+
+ubuntu'da screen recording and saving as a gif yani `gif recording` tool'u olarak `peek`'i kurdum.
+
+# Gün7:
+
+Bugün aşağıdaki durumlardan dolayı verimli çalışamadım:
+
+1. Intellij IDEA otomatik olarak upgrade olmuş. Bu yüzden LXDE Lubuntu start menüdeki `Programming > Intellij IDEA` işlevsiz kalmış. Basınca launch etmiyordu.
+Çözüm için araştırdım. Lubuntu'da kısayollar `.desktop` uzantılı olup içi de aşağıdaki gibi oluyormuş. 
+Sorun şu ki IDEA upgrade sırasında mevcut `.dekstop`ı silmiş. 
+
+Aşağıdaki gibi bir kısayol oluşturup,
+ 
+```
+taha@taha-Inspiron-3558:/$ cat ~/idea.desktop 
+[Desktop Entry]
+Type=Application
+Terminal=false
+Exec=/bin/sh /snap/intellij-idea-community/163/bin/idea.sh
+Name=Intellij
+Icon=/snap/intellij-idea-community/163/bin/idea.png
+```
+
+bunu aşağıya iki isimle koydum, ama olmadı.
+
+```
+taha@taha-Inspiron-3558:~/.local/share/applications$ ll
+total 16
+drwxr-xr-x  2 taha taha 4096 Tem 27 19:36 ./
+drwxr-xr-x 25 taha taha 4096 Tem 26 02:58 ../
+-rw-rw-r--  1 taha taha  173 Tem 27 19:35 idea.desktop
+-rw-rw-r--  1 taha taha  173 Tem 27 19:36 jetbrains-idea-ce.desktop
+```
+
+Mevcut uzantılar burada ama burası root'un yetki alanında olduğundan burada oluşturamıyorum yukarıdaki yerde oluşturmak gerekiyordu. 
+Buraya bakınca jetbrains-idea-ce.desktop gerçekten de yoktu.  
+
+```
+taha@taha-Inspiron-3558:/usr/share/applications$ ls -a
+.
+..
+2048-qt.desktop
+apport-gtk.desktop
+apturl.desktop
+bluetooth-sendto.desktop
+code.desktop
+code-url-handler.desktop
+com.canonical.launcher.amazon.desktop
+compton-conf.desktop
+compton.desktop
+com.uploadedlobster.peek.desktop
+defaults.list
+emacs.desktop
+...
+```
+
+Yeni versiyonu `/snap/intellij-idea-community/163` yani 2019.2'yi kullanmak istediğimde VM hatası verip başlamıyordu. Yine burası da Root'un yetkisinde olduğundan 
+Root olsam da aşağıdaki içeriği değiştiremedim. `chown` vs. yapmak gerekiyor muhtemelen.
+
+```
+taha@taha-Inspiron-3558:/snap/intellij-idea-community/current/bin$ cat idea64.vmoptions 
+-Xms128m
+-Xmx750m
+-XX:ReservedCodeCacheSize=240m
+-XX:+UseConcMarkSweepGC
+-XX:SoftRefLRUPolicyMSPerMB=50
+-ea
+-XX:CICompilerCount=2
+-Dsun.io.useCanonPrefixCache=false
+-Djava.net.preferIPv4Stack=true
+-Djdk.http.auth.tunneling.disabledSchemes=""
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:-OmitStackTraceInFastThrow
+-Djdk.attach.allowAttachSelf
+-Dawt.useSystemAAFontSettings=lcd
+-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine
+-Dsun.tools.attach.tmp.only=true
+
+```
+
+Linux upgrade'lerde symbolic link oluşturup current ile güncel versiyonu tutuyor:
+
+`/snap/intellij-idea-community/current/bin`
+
+Eski versiyonu aşağıdaki gibi konsoldan çalıştırarak kullanıyorum :)
+
+`taha@taha-Inspiron-3558:/snap/intellij-idea-community/152/bin$ ./idea.sh`
+
+2. İki tane IDEA instance'ı çalışıyorken ve 30'dan fazla tab açıkken ara ara çok fazla donuyor. 
+Swap space'i arttırmış olsam da çok fazla etkilemedi. RAM'i arttırmak gerekiyor ama DELL laptop'ta RAM slotu komple arka kapağın altında.
+Tamamını sökmek gerekiyor. 
+
+Bu işe girmeden acaba GPU'nun RAM'ini utilize edebilir miyim diye düşündüm ama zaten şu anda NVIDIA driver'ı göremiyor ubuntu.
+Çok pis bir konu bu, bir defa uzun uğraşlar sonucu sistem göcüp tüm verilerimi kaybetmiştim. 
+
+3. Projede `common` module Test class'ları eklemek istediğimde Project Structure bozuldu. `Project Structure > Modules` kısmını kurcalamıştım. 
+Sources, test vs. kısımları olması gerektiği gibi yani sırasıyla `src/main/java` ve `src/test/java` olarak ayarladım bu defa tamamen bozuldu.
+Invalidate caches vs. yaptım olmadı. Çözüm maven clean install yapmakmış ve reimport yapmak tabi ki. Bu kısım maven ile doğrudan ilgili dikkat et.
+
+Ama bir şey keşfettim. Yeni bir module eklemek istediğimde directory'leri ben elle ekliyordum. 
+Şimdi `Project Structure > Modules` kısmında `+` ya basıp ekliyorum.
+
+## displaying ram info
+
+`sudo dmidecode -t 17` //fiziksel bilgi, BIOS'ton slot'larla beraber
+`free -m` MB cinsinden kulllanılan memory
+`cat /proc/meminfo` ya da `vmstat -s` 
+
+`htop` //görev yöneticisi olarak detaylı.
+
+maximum RAM capacity:
+
+```
+taha@taha-Inspiron-3558:/snap/intellij-idea-community/152/bin$ sudo dmidecode -t 16
+# dmidecode 3.1
+Getting SMBIOS data from sysfs.
+SMBIOS 2.8 present.
+
+Handle 0x005B, DMI type 16, 23 bytes
+Physical Memory Array
+        Location: System Board Or Motherboard
+        Use: System Memory
+        Error Correction Type: None
+        Maximum Capacity: 16 GB
+        Error Information Handle: Not Provided
+        Number Of Devices: 2
+```
+
+system information
+
+```
+taha@taha-Inspiron-3558:/snap/intellij-idea-community/152/bin$ sudo dmidecode -t 17
+# dmidecode 3.1
+Getting SMBIOS data from sysfs.
+SMBIOS 2.8 present.
+
+Handle 0x0060, DMI type 17, 34 bytes
+Memory Device
+        Array Handle: 0x005B
+        Error Information Handle: Not Provided
+        Total Width: 64 bits
+        Data Width: 64 bits
+        Size: 4096 MB
+        Form Factor: SODIMM
+        Set: None
+        Locator: DIMM A
+        Bank Locator: Not Specified
+        Type: DDR3
+        Type Detail: Synchronous
+        Speed: 1600 MT/s
+        Manufacturer: Samsung
+        Serial Number: EFEAFD80
+        Asset Tag: 9876543210
+        Part Number: M471B5173DB0-YK0  
+        Rank: 1
+        Configured Clock Speed: 1600 MT/s
+        
+taha@taha-Inspiron-3558:/snap/intellij-idea-community/152/bin$ sudo dmidecode | grep -A 9 "System Information"
+System Information
+        Manufacturer: Dell Inc.
+        Product Name: Inspiron 3558
+        Version: Not Specified
+        Serial Number: D5GVVB2
+        UUID: 4C4C4544-0035-4710-8056-C4C04F564232
+        Wake-up Type: Power Switch
+        SKU Number: 06B0
+        Family: Not Specified
+```
+
+ya da 
+
+```
+taha@taha-Inspiron-3558:/snap/intellij-idea-community/152/bin$ sudo lshw -C memory
+  *-firmware                
+       description: BIOS
+       vendor: Dell Inc.
+       physical id: 0
+       version: A09
+       date: 04/22/2016
+       size: 64KiB
+       capacity: 8128KiB
+       capabilities: pci pnp upgrade shadowing cdboot bootselect edd int13floppy1200 int13floppy720 int13floppy2880 int5printscreen int9keyboard int14serial int17printer acpi usb smartbattery biosbootspecification netboot uefi
+  *-cache:0
+       description: L1 cache
+       physical id: 42
+       slot: L1 Cache
+       size: 32KiB
+       capacity: 32KiB
+       capabilities: synchronous internal write-back instruction
+       configuration: level=1
+  *-cache:1
+       description: L2 cache
+       physical id: 47
+       slot: L2 Cache
+       size: 256KiB
+       capacity: 256KiB
+       capabilities: synchronous internal write-back unified
+       configuration: level=2
+  *-cache:2
+       description: L3 cache
+       physical id: 4c
+       slot: L3 Cache
+       size: 3MiB
+       capacity: 3MiB
+       capabilities: synchronous internal write-back unified
+       configuration: level=3
+  *-cache
+       description: L1 cache
+       physical id: 3d
+       slot: L1 Cache
+       size: 32KiB
+       capacity: 32KiB
+       capabilities: synchronous internal write-back data
+       configuration: level=1
+  *-memory
+       description: System Memory
+       physical id: 5b
+       slot: System board or motherboard
+       size: 4GiB
+     *-bank:0
+          description: SODIMM DDR3 Synchronous 1600 MHz (0,6 ns)
+          product: M471B5173DB0-YK0
+          vendor: Samsung
+          physical id: 0
+          serial: EFEAFD80
+          slot: DIMM A
+          size: 4GiB
+          width: 64 bits
+          clock: 1600MHz (0.6ns)
+     *-bank:1
+          description: DIMM [empty]
+          physical id: 1
+          slot: DIMM B
+```
+
+ultimately and short:
+
+```
+taha@taha-Inspiron-3558:/snap/intellij-idea-community/152/bin$ sudo lshw -short -C memory
+H/W path       Device      Class          Description
+=====================================================
+/0/0                       memory         64KiB BIOS
+/0/51/42                   memory         32KiB L1 cache
+/0/51/47                   memory         256KiB L2 cache
+/0/51/4c                   memory         3MiB L3 cache
+/0/3d                      memory         32KiB L1 cache
+/0/5b                      memory         4GiB System Memory
+/0/5b/0                    memory         4GiB SODIMM DDR3 Synchronous 1600 MHz (0,6 ns)
+/0/5b/1                    memory         DIMM [empty]
+```
+
+son olarak:
+
+son olarak hangi ram'i satın alacağını bilmek için bunlar yeterli bilgiler olsa da DDR3L kafa karıştırabilir. 
+Bu low voltage demek yani, DDR3 normalde 1.5V ded çalışırken laptopllarda pil ömrü için 1.35V de çalışan bunlar kullanılıyor. 
+dmidecode, configured voltage kısmında bunu yazıyor ama bende yazmadı. Manifacturer spec'ten baktım.
+SODIMM ile de Small olarak yani laptop için belirterek 
+`4gb DDR3L SODIMM 1600MHz ram satın al` şeklinde aratabildim. :)
+
+## optimizing vm options - jvm parameters 
+
+1. Explicit Heap Memory – Xms and Xmx Options 
+    - `-Xms2G -Xmx5G` 
+2. Starting with Java 8, the size of Metaspace is not defined. 
+Once it reaches the global limit, JVM automatically increases it, 
+However, to overcome any unnecessary instability, we can set Metaspace size with:
+`-XX:MaxMetaspaceSize=<metaspace size>[unit]`
+
+Here, metaspace size denotes the amount of memory we want to assign to Metaspace.
+
+As per Oracle guidelines, after total available memory, the second most influential factor is the proportion of the heap reserved for the Young Generation. By default, the minimum size of the YG is 1310 MB, and maximum size is unlimited.
+
+We can assign them explicitly:
+```	
+-XX:NewSize=<young size>[unit] 
+-XX:MaxNewSize=<young size>[unit]
+```
+
+For better stability of the application, choosing of right Garbage Collection algorithm is critical.
+
+JVM has four types of GC implementations:
+
+    Serial Garbage Collector
+    Parallel Garbage Collector
+    CMS Garbage Collector
+    G1 Garbage Collector
+
+These implementations can be declared with the below parameters:
+```
+-XX:+UseSerialGC
+-XX:+UseParallelGC
+-XX:+USeParNewGC
+-XX:+UseG1GC
+```
+https://www.baeldung.com/jvm-parameters
 
 
 # tools
