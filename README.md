@@ -4476,7 +4476,43 @@ Response(HttpURLConnection connection) throws IOException {
 
 # Gün9:
 
+## review: environment variables
 
+```
+taha@taha-Inspiron-3558:/$ cat /etc/environment
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+```
+
+idea'yı daha kolay çalıştırabilmek için:
+`PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/intellij-idea-community/current/bin"`
+
+## IDEA yine kendiliğinden upgrade olarak
+
+1. Font'u bozmuş. Font'lar düzgün render olamıyor.
+2. Aslında upgrade olurken 
+
+```
+# custom IntelliJ IDEA VM options
+
+-server
+-Xms3072M
+-Xmx3072M
+-XX:ReservedCodeCacheSize=240m
+-XX:+UseConcMarkSweepGC
+-XX:SoftRefLRUPolicyMSPerMB=50
+-ea
+-Dsun.io.useCanonCaches=false
+-Djava.net.preferIPv4Stack=true
+-Djdk.http.auth.tunneling.disabledSchemes=""
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:-OmitStackTraceInFastThrow
+-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine
+-Dsun.tools.attach.tmp.only=true
+-Dawt.useSystemAAFontSettings=lcd
+-Dsun.java2d.xrender=true
+-Dswing.aatext=true
+```
 
 # tools
 
